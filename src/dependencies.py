@@ -13,13 +13,13 @@ from .config import ValidatorSettings, load_config
 
 
 def get_metrics_client(
-    config: Annotated[ValidatorSettings, Depends(load_config)]
+    config: Annotated[ValidatorSettings, Depends(load_config)],
 ) -> MetricsClient:
     return MetricsClient(config.prometheus_endpoint)
 
 
 def get_mapping_source(
-    config: Annotated[ValidatorSettings, Depends(load_config)]
+    config: Annotated[ValidatorSettings, Depends(load_config)],
 ) -> MappingSource:
     if config.mapping_source == "database":
         return SqliteMappingSource()
@@ -41,7 +41,7 @@ def get_worker_provider(
 
 
 def get_database_service(
-    worker_provider: Annotated[WorkerProvider, Depends(get_worker_provider)]
+    worker_provider: Annotated[WorkerProvider, Depends(get_worker_provider)],
 ) -> DatabaseService:
     # In production, you might want to use a singleton  or DI container
     return DatabaseService(worker_provider)
