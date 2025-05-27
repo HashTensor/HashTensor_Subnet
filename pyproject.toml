@@ -1,0 +1,21 @@
+[project]
+name = "hashtensor-validator"
+version = "0.1.0"
+description = "Bittensor Kaspa Validator"
+dependencies = [
+    "pydantic-settings",
+    "sqlalchemy",
+    "alembic",
+    "fiber[full] @ git+https://github.com/rayonlabs/fiber.git@2.4.1"
+]
+
+[tool.alembic]
+# Path to migration scripts
+script_location = "alembic"
+# Database URL
+sqlalchemy.url = "sqlite:///data/mapping.db"
+
+[tool.black]
+line-length = 79
+target-version = ['py38', 'py39', 'py310', 'py311']
+skip-string-normalization = false
