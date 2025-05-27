@@ -131,9 +131,9 @@ async def get_validators(
 async def post_to_validator(session, node, payload):
     url = f"http://{node['ip']}:{node['port']}/register"
     try:
-        async with session.post(url, json=payload) as response:
+        async with session.post(url, json=payload, ssl=False) as response:
             text = await response.text()
-            print(f"POST to {url} responded: {text}")
+            print(f"Validator {node['hotkey']} responded: {text}")
             return text
     except Exception as e:
         print(f"POST to {url} failed: {e}")
@@ -181,10 +181,7 @@ async def main():
     }
     async with aiohttp.ClientSession() as session:
         tasks = [post_to_validator(session, node, payload) for node in nodes]
-        responses = await asyncio.gather(*tasks)
-    for node, response in zip(nodes, responses):
-        print(f"Validator {node['hotkey']} responded: {response}")
-    print(nodes)
+        await asyncio.gather(*tasks)
     
 
 
