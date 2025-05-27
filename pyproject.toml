@@ -6,6 +6,7 @@ dependencies = [
     "pydantic-settings",
     "sqlalchemy",
     "alembic",
+    "aiohttp",
     "fiber[full] @ git+https://github.com/rayonlabs/fiber.git@2.4.1"
 ]
 

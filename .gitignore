@@ -78,3 +78,4 @@ coverage.xml
 *.spec
 pip-log.txt
 pip-delete-this-directory.txt 
+data/mapping.db
