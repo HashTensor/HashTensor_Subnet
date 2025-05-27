@@ -1,0 +1,13 @@
+{
+    "apps": [
+      {
+        "name": "hashtensor-validator",
+        "script": "uvicorn",
+        "args": "src.main:app",
+        "interpreter": "python3",
+        "env": {
+          "PROMETHEUS_ENDPOINT": "http://194.135.93.138:9090"
+        }
+      }
+    ]
+  }
