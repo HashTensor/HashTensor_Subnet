@@ -14,13 +14,21 @@ FINNEY_NETWORK = "finney"
 FINNEY_TEST_NETWORK = "test"
 FINNEY_SUBTENSOR_ADDRESS = "wss://entrypoint-finney.opentensor.ai:443"
 FINNEY_TEST_SUBTENSOR_ADDRESS = "wss://test.finney.opentensor.ai:443/"
-DEFAULT_NETUID = 368
 
 SS58_FORMAT = 42
 
 SUBTENSOR_NETWORK_TO_SUBTENSOR_ADDRESS = {
     FINNEY_NETWORK: FINNEY_SUBTENSOR_ADDRESS,
     FINNEY_TEST_NETWORK: FINNEY_TEST_SUBTENSOR_ADDRESS,
+}
+
+
+FINNEY_NETUID = 16
+FINNEY_TEST_NETUID = 368
+
+NETWORK_TO_NETUID = {
+    FINNEY_NETWORK: FINNEY_NETUID,
+    FINNEY_TEST_NETWORK: FINNEY_TEST_NETUID,
 }
 
 MOCKED_VALIDATORS = os.environ.get("MOCKED_VALIDATORS", "").split(",")
@@ -154,26 +162,19 @@ async def main():
         help="Subtensor network",
         default=FINNEY_NETWORK,
     )
-    parser.add_argument(
-        "--netuid",
-        type=int,
-        required=False,
-        help="Netuid",
-        default=DEFAULT_NETUID,
-    )
     args = parser.parse_args()
     worker = getattr(args, "worker", None)
     wallet_name = getattr(args, "wallet.name", "default")
     wallet_hotkey = getattr(args, "wallet.hotkey", "default")
     wallet_path = getattr(args, "wallet.path", "~/.bittensor/wallets/")
     subtensor_network = getattr(args, "subtensor.network", FINNEY_NETWORK)
-    netuid = getattr(args, "netuid", DEFAULT_NETUID)
     wallet = Wallet(config=Config(wallet_name, wallet_hotkey, wallet_path))
     signature = wallet.get_hotkey().sign(worker)
     print(
         f"Your signed message for wallet {wallet_name} and hotkey {wallet_hotkey} is:\n{signature.hex()}"
     )
     async with get_substrate(subtensor_network) as substrate:
+        netuid = NETWORK_TO_NETUID[subtensor_network]
         nodes = await get_validators(substrate, netuid)
     if not nodes:
         print("No validators found")
