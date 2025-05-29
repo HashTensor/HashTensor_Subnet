@@ -14,7 +14,7 @@ FINNEY_NETWORK = "finney"
 FINNEY_TEST_NETWORK = "test"
 FINNEY_SUBTENSOR_ADDRESS = "wss://entrypoint-finney.opentensor.ai:443"
 FINNEY_TEST_SUBTENSOR_ADDRESS = "wss://test.finney.opentensor.ai:443/"
-DEFAULT_NETUID = 173
+DEFAULT_NETUID = 368
 
 SS58_FORMAT = 42
 
@@ -59,7 +59,6 @@ def get_substrate(
         use_remote_preset=True,
         url=subtensor_address,
     )
-    print(f"Connected to {subtensor_address}")
     return substrate
 
 
@@ -83,7 +82,9 @@ def parse_ip(ip_int: int):
 async def get_nodes_for_uid(
     substrate: AsyncSubstrateInterface, netuid: int, block: int | None = None
 ):
-    block_hash = await substrate.get_block_hash(block) if block is not None else None
+    block_hash = (
+        await substrate.get_block_hash(block) if block is not None else None
+    )
     response = await substrate.runtime_call(
         api="SubnetInfoRuntimeApi",
         method="get_metagraph",
@@ -174,6 +175,9 @@ async def main():
     )
     async with get_substrate(subtensor_network) as substrate:
         nodes = await get_validators(substrate, netuid)
+    if not nodes:
+        print("No validators found")
+        return
     payload = {
         "hotkey": wallet.get_hotkey().ss58_address,
         "worker": worker,
@@ -182,8 +186,7 @@ async def main():
     async with aiohttp.ClientSession() as session:
         tasks = [post_to_validator(session, node, payload) for node in nodes]
         await asyncio.gather(*tasks)
-    
 
 
 if __name__ == "__main__":
-   asyncio.run(main())
+    asyncio.run(main())

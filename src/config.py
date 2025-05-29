@@ -4,7 +4,7 @@
 from datetime import timedelta
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Literal
-
+from fiber.constants import FINNEY_NETWORK, FINNEY_TEST_NETWORK
 
 class ValidatorSettings(BaseSettings):
     prometheus_endpoint: str = "http://localhost:9090"
@@ -15,6 +15,8 @@ class ValidatorSettings(BaseSettings):
     window: timedelta = timedelta(minutes=60)
     database_url: str = "sqlite:///data/mapping.db"
     cache_ttl: timedelta = timedelta(seconds=15)
+    kaspa_pool_owner_wallet: str
+    subtensor_network: Literal[FINNEY_NETWORK, FINNEY_TEST_NETWORK] = FINNEY_NETWORK # type: ignore
 
     model_config = SettingsConfigDict(env_file=".env")
 
