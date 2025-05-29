@@ -4,11 +4,24 @@
 from fastapi import Depends, FastAPI, HTTPException
 from typing import Annotated
 
+from fiber import SubstrateInterface
+
+from .utils import get_netuid, is_hotkey_registered, verify_signature
+
+from .interfaces.worker_provider import WorkerProvider
+
 from .validator import Validator
 
 from .models import HotkeyWorkerRegistration
 
-from .dependencies import get_database_service, get_validator
+from .config import ValidatorSettings, load_config
+
+from .dependencies import (
+    get_database_service,
+    get_substrate,
+    get_validator,
+    get_worker_provider,
+)
 from .interfaces.database import DatabaseService
 
 app = FastAPI(prefix="/api", title="HashTensor Validator")
@@ -23,10 +36,27 @@ def health_check():
 async def register_hotkey_worker(
     reg: HotkeyWorkerRegistration,
     db_service: Annotated[DatabaseService, Depends(get_database_service)],
+    worker_provider: Annotated[WorkerProvider, Depends(get_worker_provider)],
+    config: Annotated[ValidatorSettings, Depends(load_config)],
+    substrate: Annotated[SubstrateInterface, Depends(get_substrate)],
 ):
-    error = await db_service.add_mapping(reg.hotkey, reg.worker, reg.signature)
-    if error:
-        raise HTTPException(status_code=400, detail=error)
+    if not await worker_provider.is_worker_exists(
+        config.kaspa_pool_owner_wallet, reg.worker
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Worker not found. Make sure you are using the correct wallet address\n"
+            + f"Kaspa Pool Owner Wallet: {config.kaspa_pool_owner_wallet}",
+        )
+    if not verify_signature(reg.hotkey, reg.worker, reg.signature):
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    if not is_hotkey_registered(reg.hotkey, substrate, get_netuid(config.subtensor_network)):
+        raise HTTPException(status_code=400, detail="Hotkey not registered. To register in subnet use btcli command: `btcli subnet register`")
+    try:
+        await db_service.add_mapping(reg.hotkey, reg.worker, reg.signature)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
     return dict(message="Registration successful")
 
 

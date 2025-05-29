@@ -1,6 +1,9 @@
 from fastapi import Depends
 from typing import Annotated
 
+from fiber import SubstrateInterface
+
+
 from .mapping import MappingManager, MappingSource
 
 from .metrics import MetricsClient
@@ -11,6 +14,9 @@ from .interfaces.database import DatabaseService, SqliteMappingSource
 from .validator import Validator
 from .config import ValidatorSettings, load_config
 
+
+substrate: SubstrateInterface | None = None
+worker_provider: WorkerProvider | None = None
 
 def get_metrics_client(
     config: Annotated[ValidatorSettings, Depends(load_config)],
@@ -33,18 +39,21 @@ def get_mapping_manager(
     return MappingManager(mapping_source, config.cache_ttl.total_seconds())
 
 
+
+
 def get_worker_provider(
     metrics_client: Annotated[MetricsClient, Depends(get_metrics_client)],
     config: Annotated[ValidatorSettings, Depends(load_config)],
 ) -> WorkerProvider:
-    return WorkerProvider(metrics_client, config.cache_ttl.total_seconds())
+    global worker_provider
+    if worker_provider is None:
+        worker_provider = WorkerProvider(metrics_client, config.cache_ttl.total_seconds())
+    return worker_provider
 
 
-def get_database_service(
-    worker_provider: Annotated[WorkerProvider, Depends(get_worker_provider)],
-) -> DatabaseService:
+def get_database_service() -> DatabaseService:
     # In production, you might want to use a singleton  or DI container
-    return DatabaseService(worker_provider)
+    return DatabaseService()
 
 
 def get_validator(
@@ -53,3 +62,16 @@ def get_validator(
     mapping_manager: Annotated[MappingManager, Depends(get_mapping_manager)],
 ) -> Validator:
     return Validator(config, metrics_client, mapping_manager)
+
+
+
+
+def get_substrate(
+    config: Annotated[ValidatorSettings, Depends(load_config)],
+) -> SubstrateInterface:
+    global substrate
+    if substrate is None:
+        from fiber.chain.interface import get_substrate
+
+        substrate = get_substrate(config.subtensor_network)
+    return substrate
