@@ -4,6 +4,8 @@ import socket
 import struct
 import asyncio
 import aiohttp
+import json
+import time
 from bittensor_wallet import Wallet, Config
 from async_substrate_interface import AsyncSubstrateInterface
 from scalecodec.utils.ss58 import ss58_encode
@@ -137,16 +139,34 @@ async def get_validators(
     )
 
 
-async def post_to_validator(session, node, payload):
+async def post_to_validator(session, node, payload, signature):
     url = f"http://{node['ip']}:{node['port']}/register"
+    headers = {"X-Signature": signature}
     try:
-        async with session.post(url, json=payload, ssl=False) as response:
+        async with session.post(
+            url, json=payload, headers=headers, ssl=False
+        ) as response:
             text = await response.text()
             print(f"Validator {node['hotkey']} responded: {text}")
             return text
     except Exception as e:
         print(f"POST to {url} failed: {e}")
         return None
+
+
+def build_registration_payload(
+    wallet: Wallet, worker: str
+) -> tuple[dict, str]:
+    registration_time = time.time()
+    payload = {
+        "hotkey": wallet.get_hotkey().ss58_address,
+        "worker": worker,
+        "registration_time": registration_time,
+    }
+    # Sign the JSON with sorted keys
+    reg_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    signature = wallet.get_hotkey().sign(reg_json).hex()
+    return payload, signature
 
 
 async def main():
@@ -169,23 +189,20 @@ async def main():
     wallet_path = getattr(args, "wallet.path", "~/.bittensor/wallets/")
     subtensor_network = getattr(args, "subtensor.network", FINNEY_NETWORK)
     wallet = Wallet(config=Config(wallet_name, wallet_hotkey, wallet_path))
-    signature = wallet.get_hotkey().sign(worker)
-    print(
-        f"Your signed message for wallet {wallet_name} and hotkey {wallet_hotkey} is:\n{signature.hex()}"
-    )
     async with get_substrate(subtensor_network) as substrate:
         netuid = NETWORK_TO_NETUID[subtensor_network]
         nodes = await get_validators(substrate, netuid)
     if not nodes:
         print("No validators found")
         return
-    payload = {
-        "hotkey": wallet.get_hotkey().ss58_address,
-        "worker": worker,
-        "signature": signature.hex(),
-    }
+    payload, signature = build_registration_payload(wallet, worker)
+    print(f"Registration payload: {json.dumps(payload, indent=2)}")
+    print(f"Signature (X-Signature): {signature}")
     async with aiohttp.ClientSession() as session:
-        tasks = [post_to_validator(session, node, payload) for node in nodes]
+        tasks = [
+            post_to_validator(session, node, payload, signature)
+            for node in nodes
+        ]
         await asyncio.gather(*tasks)
 
 

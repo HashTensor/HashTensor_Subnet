@@ -24,7 +24,7 @@ class HotkeyWorker(Base):
     __tablename__ = "hotkey_worker"
     worker: Mapped[str] = mapped_column(String, primary_key=True)
     hotkey: Mapped[str] = mapped_column(String, nullable=False)
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    registration_time: Mapped[float] = mapped_column(DateTime, nullable=False)
     signature: Mapped[str] = mapped_column(String, nullable=False)
 
 
@@ -52,7 +52,11 @@ class DatabaseService:
         self.session = SessionLocal()
 
     async def add_mapping(
-        self, hotkey: str, worker: str, signature: str
+        self,
+        hotkey: str,
+        worker: str,
+        signature: str,
+        registration_time: float,
     ) -> None:
         # Only add mapping to database
         existing = (
@@ -61,7 +65,10 @@ class DatabaseService:
         if existing:
             raise ValueError("Worker already registered")
         new_mapping = HotkeyWorker(
-            worker=worker, hotkey=hotkey, signature=signature
+            worker=worker,
+            hotkey=hotkey,
+            signature=signature,
+            registration_time=registration_time,
         )
         self.session.add(new_mapping)
         self.session.commit()
