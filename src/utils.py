@@ -26,7 +26,12 @@ def get_nodes_for_netuid_cached(
     return result
 
 
-def is_hotkey_registered(hotkey: str, substrate: SubstrateInterface, netuid: int, block: int | None = None) -> bool:
+def is_hotkey_registered(
+    hotkey: str,
+    substrate: SubstrateInterface,
+    netuid: int,
+    block: int | None = None,
+) -> bool:
     nodes = get_nodes_for_netuid_cached(substrate, netuid, block)
     for node in nodes:
         if node.hotkey == hotkey:
@@ -36,6 +41,7 @@ def is_hotkey_registered(hotkey: str, substrate: SubstrateInterface, netuid: int
 
 def verify_signature(hotkey: str, worker: str, signature: str) -> bool:
     from fiber import Keypair
+
     keypair = Keypair(hotkey)
     try:
         return keypair.verify(worker, bytes.fromhex(signature))

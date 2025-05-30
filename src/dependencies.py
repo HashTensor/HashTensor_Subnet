@@ -18,6 +18,7 @@ from .config import ValidatorSettings, load_config
 substrate: SubstrateInterface | None = None
 worker_provider: WorkerProvider | None = None
 
+
 def get_metrics_client(
     config: Annotated[ValidatorSettings, Depends(load_config)],
 ) -> MetricsClient:
@@ -39,15 +40,15 @@ def get_mapping_manager(
     return MappingManager(mapping_source, config.cache_ttl.total_seconds())
 
 
-
-
 def get_worker_provider(
     metrics_client: Annotated[MetricsClient, Depends(get_metrics_client)],
     config: Annotated[ValidatorSettings, Depends(load_config)],
 ) -> WorkerProvider:
     global worker_provider
     if worker_provider is None:
-        worker_provider = WorkerProvider(metrics_client, config.cache_ttl.total_seconds())
+        worker_provider = WorkerProvider(
+            metrics_client, config.cache_ttl.total_seconds()
+        )
     return worker_provider
 
 
@@ -62,8 +63,6 @@ def get_validator(
     mapping_manager: Annotated[MappingManager, Depends(get_mapping_manager)],
 ) -> Validator:
     return Validator(config, metrics_client, mapping_manager)
-
-
 
 
 def get_substrate(

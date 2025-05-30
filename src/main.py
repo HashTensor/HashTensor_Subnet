@@ -1,8 +1,10 @@
 # main.py
 # FastAPI entry point for the validator
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Header
 from typing import Annotated
+import json
+import time
 
 from fiber import SubstrateInterface
 
@@ -39,7 +41,19 @@ async def register_hotkey_worker(
     worker_provider: Annotated[WorkerProvider, Depends(get_worker_provider)],
     config: Annotated[ValidatorSettings, Depends(load_config)],
     substrate: Annotated[SubstrateInterface, Depends(get_substrate)],
+    x_signature: Annotated[str, Header(alias="X-Signature")],
 ):
+    # 1. Check registration_time is close to current UTC time
+    now = time.time()
+    if (
+        abs(now - reg.registration_time)
+        > config.registration_time_tolerance.total_seconds()
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Registration time is too far from current UTC time.",
+        )
+    # 2. Check worker exists
     if not await worker_provider.is_worker_exists(
         config.kaspa_pool_owner_wallet, reg.worker
     ):
@@ -48,15 +62,25 @@ async def register_hotkey_worker(
             detail=f"Worker not found. Make sure you are using the correct wallet address\n"
             + f"Kaspa Pool Owner Wallet: {config.kaspa_pool_owner_wallet}",
         )
-    if not verify_signature(reg.hotkey, reg.worker, reg.signature):
+    # 3. Verify signature on the full request object (sorted keys)
+    reg_dict = reg.model_dump()
+    reg_json = json.dumps(reg_dict, sort_keys=True, separators=(",", ":"))
+    if not verify_signature(reg.hotkey, reg_json, x_signature):
         raise HTTPException(status_code=400, detail="Invalid signature")
-    if not is_hotkey_registered(reg.hotkey, substrate, get_netuid(config.subtensor_network)):
-        raise HTTPException(status_code=400, detail="Hotkey not registered. To register in subnet use btcli command: `btcli subnet register`")
+    # 4. Check hotkey is registered
+    if not is_hotkey_registered(
+        reg.hotkey, substrate, get_netuid(config.subtensor_network)
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Hotkey not registered. To register in subnet use btcli command: `btcli subnet register`",
+        )
     try:
-        await db_service.add_mapping(reg.hotkey, reg.worker, reg.signature)
+        await db_service.add_mapping(
+            reg.hotkey, reg.worker, x_signature, reg.registration_time
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
     return dict(message="Registration successful")
 
 
