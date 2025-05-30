@@ -3,7 +3,7 @@
 
 from datetime import datetime
 import os
-from sqlalchemy import DateTime, create_engine, String
+from sqlalchemy import DateTime, Float, create_engine, String
 from sqlalchemy.orm import (
     sessionmaker,
     declarative_base,
@@ -24,7 +24,7 @@ class HotkeyWorker(Base):
     __tablename__ = "hotkey_worker"
     worker: Mapped[str] = mapped_column(String, primary_key=True)
     hotkey: Mapped[str] = mapped_column(String, nullable=False)
-    registration_time: Mapped[float] = mapped_column(DateTime, nullable=False)
+    registration_time: Mapped[float] = mapped_column(Float, nullable=False)
     signature: Mapped[str] = mapped_column(String, nullable=False)
 
 
