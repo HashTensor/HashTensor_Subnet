@@ -9,7 +9,6 @@ import time
 from bittensor_wallet import Wallet, Config
 from async_substrate_interface import AsyncSubstrateInterface
 from scalecodec.utils.ss58 import ss58_encode
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Only keep needed constants
 FINNEY_NETWORK = "finney"
@@ -85,10 +84,6 @@ def parse_ip(ip_int: int):
     return socket.inet_ntoa(ip_bytes)
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=4),
-)
 async def get_nodes_for_uid(
     substrate: AsyncSubstrateInterface, netuid: int, block: int | None = None
 ):
