@@ -1,14 +1,20 @@
 # main.py
 # FastAPI entry point for the validator
 
+from datetime import timedelta
+import os
 from fastapi import Depends, FastAPI, HTTPException, Header
 from typing import Annotated
 import json
 import time
+from contextlib import asynccontextmanager
+import asyncio
 
 from fiber import SubstrateInterface
 
-from .utils import get_netuid, is_hotkey_registered, verify_signature
+from .tasks import set_weights_task
+
+from .utils import is_hotkey_registered, verify_signature
 
 from .interfaces.worker_provider import WorkerProvider
 
@@ -17,16 +23,65 @@ from .validator import Validator
 from .models import HotkeyWorkerRegistration
 
 from .config import ValidatorSettings, load_config
+from fiber.chain import chain_utils
+from fiber.utils import get_logger
 
 from .dependencies import (
     get_database_service,
+    get_dynamic_config_service,
+    get_mapping_manager,
+    get_mapping_source,
+    get_metrics_client,
     get_substrate,
     get_validator,
     get_worker_provider,
 )
 from .interfaces.database import DatabaseService
 
-app = FastAPI(prefix="/api", title="HashTensor Validator")
+
+logger = get_logger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    config = load_config()
+    dynamic_config_service = get_dynamic_config_service(config)
+    metrics_client = get_metrics_client(config)
+    mapping_source = get_mapping_source(config)
+    mapping_manager = get_mapping_manager(mapping_source, config)
+    validator = get_validator(
+        config,
+        metrics_client,
+        mapping_manager,
+    )
+    substrate = get_substrate(config)
+    keypair = chain_utils.load_hotkey_keypair(
+        wallet_name=config.wallet_name, hotkey_name=config.wallet_hotkey
+    )
+
+    async def weights_loop():
+        while True:
+            try:
+                await set_weights_task(
+                    dynamic_config_service,
+                    config,
+                    validator,
+                    substrate,
+                    keypair,
+                )
+                await asyncio.sleep(timedelta(minutes=1).total_seconds())
+            except Exception as e:
+                logger.exception(f"Error in set_weights task: {e}")
+                os._exit(1)
+
+    task = asyncio.create_task(weights_loop())
+    try:
+        yield
+    finally:
+        task.cancel()
+
+
+app = FastAPI(prefix="/api", title="HashTensor Validator", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -65,12 +120,12 @@ async def register_hotkey_worker(
     # 3. Verify signature on the full request object (sorted keys)
     reg_dict = reg.model_dump()
     reg_json = json.dumps(reg_dict, sort_keys=True, separators=(",", ":"))
-    if not verify_signature(reg.hotkey, reg_json, x_signature):
+    if config.verify_signature and not verify_signature(
+        reg.hotkey, reg_json, x_signature
+    ):
         raise HTTPException(status_code=400, detail="Invalid signature")
     # 4. Check hotkey is registered
-    if not is_hotkey_registered(
-        reg.hotkey, substrate, get_netuid(config.subtensor_network)
-    ):
+    if not is_hotkey_registered(reg.hotkey, substrate, config.netuid):
         raise HTTPException(
             status_code=400,
             detail="Hotkey not registered. To register in subnet use btcli command: `btcli subnet register`",

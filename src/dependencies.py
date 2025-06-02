@@ -10,7 +10,11 @@ from .metrics import MetricsClient
 
 from .interfaces.worker_provider import WorkerProvider
 
-from .interfaces.database import DatabaseService, SqliteMappingSource
+from .interfaces.database import (
+    DatabaseService,
+    DynamicConfigService,
+    SqliteMappingSource,
+)
 from .validator import Validator
 from .config import ValidatorSettings, load_config
 
@@ -52,9 +56,11 @@ def get_worker_provider(
     return worker_provider
 
 
-def get_database_service() -> DatabaseService:
+def get_database_service(
+    config: Annotated[ValidatorSettings, Depends(load_config)],
+) -> DatabaseService:
     # In production, you might want to use a singleton  or DI container
-    return DatabaseService()
+    return DatabaseService(config.database_url)
 
 
 def get_validator(
@@ -74,3 +80,9 @@ def get_substrate(
 
         substrate = get_substrate(config.subtensor_network)
     return substrate
+
+
+def get_dynamic_config_service(
+    config: Annotated[ValidatorSettings, Depends(load_config)],
+) -> DynamicConfigService:
+    return DynamicConfigService(config.database_url)
