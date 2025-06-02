@@ -62,12 +62,16 @@ async def lifespan(app: FastAPI):
     async def weights_loop():
         while True:
             try:
-                await set_weights_task(
-                    dynamic_config_service,
-                    config,
-                    validator,
-                    substrate,
-                    keypair,
+                await asyncio.to_thread(
+                    lambda: asyncio.run(
+                        set_weights_task(
+                            dynamic_config_service,
+                            config,
+                            validator,
+                            substrate,
+                            keypair,
+                        )
+                    )
                 )
                 await asyncio.sleep(timedelta(minutes=1).total_seconds())
             except Exception as e:
@@ -75,10 +79,7 @@ async def lifespan(app: FastAPI):
                 os._exit(1)
 
     task = asyncio.create_task(weights_loop())
-    try:
-        yield
-    finally:
-        task.cancel()
+    yield
 
 
 app = FastAPI(prefix="/api", title="HashTensor Validator", lifespan=lifespan)
