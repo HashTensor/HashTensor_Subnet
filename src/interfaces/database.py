@@ -3,7 +3,7 @@
 
 from datetime import datetime
 import os
-from sqlalchemy import DateTime, Float, create_engine, String
+from sqlalchemy import DateTime, Float, create_engine, String, Column
 from sqlalchemy.orm import (
     sessionmaker,
     declarative_base,
@@ -15,8 +15,6 @@ from typing import Optional
 
 DATABASE_URL = f"sqlite:///data/mapping.db"
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
@@ -33,7 +31,8 @@ class SqliteMappingSource(MappingSource):
         self.engine = create_engine(
             db_url, connect_args={"check_same_thread": False}
         )
-        self.session = SessionLocal()
+        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.session = self.SessionLocal()
 
     async def load_mapping(self):
         # Load mapping from SQLite database: worker -> hotkey
@@ -49,7 +48,8 @@ class DatabaseService:
         self.engine = create_engine(
             db_url, connect_args={"check_same_thread": False}
         )
-        self.session = SessionLocal()
+        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.session = self.SessionLocal()
 
     async def add_mapping(
         self,
@@ -73,3 +73,43 @@ class DatabaseService:
         self.session.add(new_mapping)
         self.session.commit()
         return None  # Success
+
+
+class DynamicConfig(Base):
+    __tablename__ = "dynamic_config"
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class DynamicConfigService:
+    def __init__(self, db_url: str = DATABASE_URL):
+        self.engine = create_engine(
+            db_url, connect_args={"check_same_thread": False}
+        )
+        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.session = self.SessionLocal()
+
+    def _get(self, key: str, default=None):
+        row = self.session.query(DynamicConfig).filter_by(key=key).first()
+        if row:
+            return row.value
+        return default
+
+    def _set(self, key: str, value: str):
+        row = self.session.query(DynamicConfig).filter_by(key=key).first()
+        if row:
+            row.value = value
+        else:
+            row = DynamicConfig(key=key, value=value)
+            self.session.add(row)
+        self.session.commit()
+
+    def get_last_set_weights_time(self) -> float:
+        value = self._get("last_set_weights_time")
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def set_last_set_weights_time(self, timestamp: float):
+        self._set("last_set_weights_time", str(timestamp))

@@ -5,6 +5,7 @@ from datetime import timedelta
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Literal
 from fiber.constants import FINNEY_NETWORK, FINNEY_TEST_NETWORK
+from .utils import get_netuid
 
 
 class ValidatorSettings(BaseSettings):
@@ -19,8 +20,18 @@ class ValidatorSettings(BaseSettings):
     kaspa_pool_owner_wallet: str
     subtensor_network: Literal[FINNEY_NETWORK, FINNEY_TEST_NETWORK] = FINNEY_NETWORK  # type: ignore
     registration_time_tolerance: timedelta = timedelta(minutes=1)
+    verify_signature: bool = True
+    set_weights_interval: timedelta = timedelta(minutes=60)
+
+    wallet_name: str = "default"
+    wallet_hotkey: str = "default"
+    wallet_path: str = "~/.bittensor/wallets/"
 
     model_config = SettingsConfigDict(env_file=".env")
+
+    @property
+    def netuid(self) -> int:
+        return get_netuid(self.subtensor_network)
 
 
 def load_config() -> ValidatorSettings:
