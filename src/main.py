@@ -87,7 +87,7 @@ app = FastAPI(prefix="/api", title="HashTensor Validator", lifespan=lifespan)
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "OK"}
 
 
 @app.post("/register")
