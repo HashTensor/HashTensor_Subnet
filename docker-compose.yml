@@ -1,0 +1,27 @@
+services:
+  app:
+    image: ghcr.io/ye-du-dev/hashtensor-validator:latest
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - PORT=${PORT:-8000}
+      - DATABASE_URL=sqlite:///data/mapping.db
+      - KASPA_POOL_OWNER_WALLET=kaspa:qpjvwwk037ra98dcty38xq8j7r5y8d9zj5hg90p8cud3tx7hp98lurlxswmvw
+      - PROMETHEUS_ENDPOINT=http://194.135.93.138:9090
+      - WALLET_NAME=${WALLET_NAME:-default}
+      - WALLET_HOTKEY=${WALLET_HOTKEY:-default}
+      - WALLET_PATH=${WALLET_PATH:-~/.bittensor/wallets/}
+      - SUBTENSOR_NETWORK=${SUBTENSOR_NETWORK:-finney}
+    volumes:
+      - ~/.bittensor:/root/.bittensor
+      - ./data:/app/data
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_LABEL_ENABLE=true
+      - DOCKER_USERNAME=${GITHUB_USERNAME}
+      - DOCKER_PASSWORD=${GITHUB_TOKEN}
+    command: --interval 30

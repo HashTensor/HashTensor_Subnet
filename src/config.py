@@ -27,7 +27,7 @@ class ValidatorSettings(BaseSettings):
     wallet_hotkey: str = "default"
     wallet_path: str = "~/.bittensor/wallets/"
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def netuid(self) -> int:
