@@ -31,7 +31,9 @@ class SqliteMappingSource(MappingSource):
         self.engine = create_engine(
             db_url, connect_args={"check_same_thread": False}
         )
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.SessionLocal = sessionmaker(
+            autocommit=False, autoflush=False, bind=self.engine
+        )
         self.session = self.SessionLocal()
 
     async def load_mapping(self):
@@ -48,7 +50,9 @@ class DatabaseService:
         self.engine = create_engine(
             db_url, connect_args={"check_same_thread": False}
         )
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.SessionLocal = sessionmaker(
+            autocommit=False, autoflush=False, bind=self.engine
+        )
         self.session = self.SessionLocal()
 
     async def add_mapping(
@@ -86,7 +90,9 @@ class DynamicConfigService:
         self.engine = create_engine(
             db_url, connect_args={"check_same_thread": False}
         )
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.SessionLocal = sessionmaker(
+            autocommit=False, autoflush=False, bind=self.engine
+        )
         self.session = self.SessionLocal()
 
     def _get(self, key: str, default=None):

@@ -1,0 +1,42 @@
+# Version control
+.git
+.github
+
+# Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Test and coverage
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+src/hashtensor_validator.egg-info/
+
+# VSCode and IDE settings
+.vscode/
+*.swp
+
+# Environment and config
+.env
+*.env
+
+# Data and local DBs (if you don't want to include them in the image)
+data/*.db
+data/*.sqlite
+data/.gitkeep
+
+# Alembic cache
+alembic/versions/__pycache__/
+alembic/__pycache__/
+
+# Misc
+.DS_Store
+*.log
