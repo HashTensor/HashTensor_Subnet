@@ -15,13 +15,15 @@ services:
     volumes:
       - ~/.bittensor:/root/.bittensor
       - ./data:/app/data
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   watchtower:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json
     environment:
       - WATCHTOWER_LABEL_ENABLE=true
-      - DOCKER_USERNAME=${GITHUB_USERNAME}
-      - DOCKER_PASSWORD=${GITHUB_TOKEN}
+      
     command: --interval 30
