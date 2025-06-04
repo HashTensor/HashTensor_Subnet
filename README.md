@@ -1,0 +1,1 @@
+# HashTensor Kaspa Validator
