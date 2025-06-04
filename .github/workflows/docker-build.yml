@@ -39,6 +39,6 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/hashtensor-validator:latest
+            ghcr.io/${{ github.repository_owner.toLowerCase() }}/hashtensor-validator:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
