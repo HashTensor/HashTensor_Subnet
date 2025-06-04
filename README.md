@@ -1,4 +1,4 @@
-# HashTensor Kaspa GPU Validator
+# HashTensor Kaspa Validator
 
 A plug-and-play validator for the Bittensor network that tracks Kaspa GPU miners and helps secure the network by providing real-time ratings based on mining activity.
 
@@ -105,18 +105,3 @@ Most settings can be changed via environment variables in `docker-compose.yml`:
 ## Requirements
 - Docker and Docker Compose
 - (Advanced) Python 3.12+ if running without Docker
-
----
-
-## For Developers
-- Modular design: easily extend mapping sources or metrics
-- See `src/` for code structure
-- To run locally: `pip install -r requirements.txt` and `uvicorn src.main:app --reload`
-- To initialize the database manually:
-  ```python
-  from src.interfaces.sqlite import metadata, engine
-  metadata.create_all(engine)
-  ```
-
-## License
-MIT 
