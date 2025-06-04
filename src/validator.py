@@ -4,22 +4,23 @@
 from .metrics import MetricsClient
 from .mapping import MappingManager
 from .rating import RatingCalculator
+from .config import ValidatorSettings
 from typing import Dict, List
-from src.metrics import MinerMetrics, MinerKey
+from src.metrics import MinerMetrics
 from collections import defaultdict
 
 
 class Validator:
     def __init__(
         self,
-        config,
+        config: ValidatorSettings,
         metrics_client: MetricsClient,
         mapping_manager: MappingManager,
     ):
         self.config = config
         self.metrics_client = metrics_client
         self.mapping_manager = mapping_manager
-        self.rating_calculator = RatingCalculator(config.rating_weight)
+        self.rating_calculator = RatingCalculator(config.rating_weight, config.window)
 
     async def compute_ratings(self):
         """Fetch metrics, update mapping, compute ratings, and send to Bittensor."""

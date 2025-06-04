@@ -2,7 +2,9 @@
 import pytest
 from src.rating import RatingCalculator
 from src.metrics import MinerMetrics
+from unittest.mock import patch
 
+FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
 
 @pytest.mark.parametrize(
     "scenario,metrics_dict,expected",
@@ -12,7 +14,7 @@ from src.metrics import MinerMetrics
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,  # started exactly at window start
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -27,7 +29,7 @@ from src.metrics import MinerMetrics
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -36,7 +38,7 @@ from src.metrics import MinerMetrics
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=50,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -51,7 +53,7 @@ from src.metrics import MinerMetrics
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=0.5,
+                        uptime=FIXED_NOW - 1800,  # started halfway through window
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -60,7 +62,7 @@ from src.metrics import MinerMetrics
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -75,14 +77,14 @@ from src.metrics import MinerMetrics
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=50,
                         invalid_shares=0,
                         difficulty=2.0,
                         hashrate=1000.0,
                     ),
                     MinerMetrics(
-                        uptime=0.5,
+                        uptime=FIXED_NOW - 1800,  # started halfway through window
                         valid_shares=50,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -91,7 +93,7 @@ from src.metrics import MinerMetrics
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -109,7 +111,7 @@ from src.metrics import MinerMetrics
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=0,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -118,7 +120,7 @@ from src.metrics import MinerMetrics
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -131,18 +133,18 @@ from src.metrics import MinerMetrics
         (
             "realistic metrics example 1",
             {
-                "5GEQ4ZkrXcz7y3HK8TAd4V9ZeERJKPNeF21EifKqCJRkZGaY": [
+                "hotkey1": [
                     MinerMetrics(
-                        uptime=0.0,
+                        uptime=FIXED_NOW,  # started now, so 0 uptime in window
                         valid_shares=1274,
                         invalid_shares=0,
                         difficulty=15647.46811773941,
                         hashrate=783547108.9145503,
                     )
                 ],
-                "hotkey2": [
+                "hotkey1": [
                     MinerMetrics(
-                        uptime=1.0,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=1000,
                         invalid_shares=0,
                         difficulty=10000.0,
@@ -151,25 +153,25 @@ from src.metrics import MinerMetrics
                 ],
             },
             {
-                "5GEQ4ZkrXcz7y3HK8TAd4V9ZeERJKPNeF21EifKqCJRkZGaY": 0.0,
-                "hotkey2": 0.5016334594528169,
+                "hotkey1": 0.0,
+                "hotkey1": pytest.approx(0.5016334595, abs=1e-8),
             },
         ),
         (
             "realistic metrics example 2",
             {
-                "5GEQ4ZkrXcz7y3HK8TAd4V9ZeERJKPNeF21EifKqCJRkZGaY": [
+                "hotkey1": [
                     MinerMetrics(
-                        uptime=0.0,
+                        uptime=FIXED_NOW,  # started now, so 0 uptime in window
                         valid_shares=1001,
                         invalid_shares=0,
                         difficulty=15664.64798692341,
                         hashrate=619774754.039591,
                     )
                 ],
-                "5Dw1pwoWUH7sBMdapAGPTi698VR1GZufFBbsTEP4cx8BkjLF": [
+                "hotkey2": [
                     MinerMetrics(
-                        uptime=1748268814,
+                        uptime=FIXED_NOW - 3600,
                         valid_shares=33,
                         invalid_shares=0,
                         difficulty=116.82311045120004,
@@ -178,8 +180,8 @@ from src.metrics import MinerMetrics
                 ],
             },
             {
-                "5GEQ4ZkrXcz7y3HK8TAd4V9ZeERJKPNeF21EifKqCJRkZGaY": 0.0,
-                "5Dw1pwoWUH7sBMdapAGPTi698VR1GZufFBbsTEP4cx8BkjLF": 1.0,
+                "hotkey1": 0.0,
+                "hotkey2": pytest.approx(0.00024586, abs=1e-8),
             },
         ),
         (
@@ -187,7 +189,7 @@ from src.metrics import MinerMetrics
             {
                 "hotkeyA": [
                     MinerMetrics(
-                        uptime=0.6,
+                        uptime=FIXED_NOW - 1440,  # 1440 seconds ago (24 min)
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=100.0,
@@ -196,7 +198,7 @@ from src.metrics import MinerMetrics
                 ],
                 "hotkeyB": [
                     MinerMetrics(
-                        uptime=0.9,
+                        uptime=FIXED_NOW - 360,  # 6 min ago
                         valid_shares=200,
                         invalid_shares=0,
                         difficulty=100.0,
@@ -205,20 +207,53 @@ from src.metrics import MinerMetrics
                 ],
             },
             {
-                "hotkeyA": pytest.approx(0.18, abs=0.01),
-                "hotkeyB": pytest.approx(0.81, abs=0.01),
+                "hotkeyA": pytest.approx(0.08, abs=1e-8),
+                "hotkeyB": pytest.approx(0.01, abs=1e-8),
             },
         ),
     ],
 )
 def test_rating_calculator(scenario, metrics_dict, expected):
-    calc = RatingCalculator()
-    result = calc.rate_all(metrics_dict)
-    for hotkey, exp_score in expected.items():
-        assert (
-            result[hotkey] == exp_score
-        ), f"Scenario: {scenario}, Hotkey: {hotkey}, Expected: {exp_score}, Actual: {result[hotkey]}"
+    with patch("time.time", return_value=FIXED_NOW):
+        calc = RatingCalculator()
+        result = calc.rate_all(metrics_dict)
+        for hotkey, exp_score in expected.items():
+            assert (
+                result[hotkey] == exp_score
+            ), f"Scenario: {scenario}, Hotkey: {hotkey}, Expected: {exp_score}, Actual: {result[hotkey]}"
 
 
 def test_rating_calculator_stub():
     assert True  # Placeholder
+
+
+def test_rating_calculator_real_data():
+    with patch("time.time", return_value=FIXED_NOW):
+        calc = RatingCalculator()
+        metrics_dict = {
+            "hotkey1": [
+                MinerMetrics(
+                    uptime=FIXED_NOW - 3600,  # started at window start
+                    valid_shares=119,
+                    invalid_shares=0,
+                    difficulty=33260.226740223945,
+                    hashrate=894925502.344341,
+                )
+            ],
+            "hotkey2": [
+                MinerMetrics(
+                    uptime=FIXED_NOW - 3599,  # started 1 second after window start
+                    valid_shares=5,
+                    invalid_shares=0,
+                    difficulty=85.89934592,
+                    hashrate=26177825.669120003,
+                )
+            ],
+        }
+        result = calc.rate_all(metrics_dict)
+        expected = {
+            "hotkey1": 1.0,
+            "hotkey2": pytest.approx(0.00010845, abs=1e-8),
+        }
+        for hotkey, exp_score in expected.items():
+            assert result[hotkey] == exp_score
