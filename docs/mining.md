@@ -12,7 +12,7 @@
      ```
    - For the **testnet**:
      ```bash
-     btcli subnet register --netuid 368
+     btcli subnet register --netuid 368 --network test
      ```
 
 2. **Start your ASIC/GPU Kaspa miner using the following pool and wallet:**
