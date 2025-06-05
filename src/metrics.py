@@ -53,7 +53,12 @@ class MetricsClient:
             metric = item["metric"]
             if metric.get("wallet") is None or metric.get("worker") is None:
                 continue
-            value = float(item["value"][1])
+            if "value" in item:
+                value = float(item["value"][1])
+            elif "values" in item and item["values"]:
+                value = float(item["values"][-1][1])  # last value in the range
+            else:
+                continue
             miner_key = MinerKey(**metric)
             result[miner_key] = value_type(value)
         return result
@@ -82,7 +87,7 @@ class MetricsClient:
     async def _get_avg_hashrate(
         self, session: aiohttp.ClientSession
     ) -> Dict[MinerKey, float]:
-        resolution = f"{int(self.window.total_seconds())}s"
+        resolution = f"{int(self.window.total_seconds())}s" 
         query = f"sum(rate(ks_valid_share_diff_counter[{resolution}])) by (wallet, worker) * 1e9"
         return await self._fetch_metric(session, query, float)
 
