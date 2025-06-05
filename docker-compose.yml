@@ -13,7 +13,7 @@ services:
       - SUBTENSOR_NETWORK=${SUBTENSOR_NETWORK:-finney}
     volumes:
       - ~/.bittensor:/root/.bittensor
-      - ./.hashtensor:/app/data
+      - ./data:/app/data
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
