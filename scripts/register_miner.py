@@ -3,7 +3,7 @@ import argparse
 import os
 import socket
 import struct
-import aiohttp
+import asyncio
 import json
 import time
 import sys
@@ -55,7 +55,7 @@ def check_dependencies():
 
 check_dependencies()
 
-import asyncio
+import aiohttp
 from bittensor_wallet import Wallet, Config
 from async_substrate_interface import AsyncSubstrateInterface
 from scalecodec.utils.ss58 import ss58_encode
