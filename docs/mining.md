@@ -25,7 +25,7 @@
    > **Note:**
    > If you use a different Kaspa wallet for mining (not the pool owner wallet above), you can still mine Kaspa in our pool and increase your hashrate, but you will **not** be able to register your worker in the subnet or receive Alpha token rewards in Bittensor.
 
-3. **Bind your hotkey to your worker using the registration script:**
+3. **Bind your hotkey to your worker using the binding script:**
 
    > **🟢 Recommended:** Create and activate a Python virtual environment (venv) before running the script. This helps keep dependencies isolated and your system Python clean.
    >
@@ -37,7 +37,7 @@
    > You can deactivate the venv later with `deactivate`. This step is optional but recommended.
 
    ```bash
-   curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/register_miner.py | python3 - \
+   curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/bind_worker.py | python3 - \
      --worker YOUR_WORKER_NAME \
      --wallet.name my_wallet \
      --wallet.hotkey my_hotkey \
@@ -100,7 +100,7 @@ cd 1.76
 - **Immediately run the registration script** to bind your hotkey to your worker:
 
   ```bash
-  curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/register_miner.py | python3 - \
+  curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/bind_worker.py | python3 - \
     --worker YOUR_WORKER_NAME \
     --wallet.name <wallet_name> \
     --wallet.hotkey <hotkey_name> \
@@ -128,14 +128,14 @@ cd 1.76
 
 ```bash
 # Register first worker
-curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/register_miner.py | python3 - \
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/bind_worker.py | python3 - \
   --worker worker1 \
   --wallet.name my_wallet \
   --wallet.hotkey my_hotkey \
   --subtensor.network finney
 
 # Register second worker
-curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/register_miner.py | python3 - \
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/bind_worker.py | python3 - \
   --worker worker2 \
   --wallet.name my_wallet \
   --wallet.hotkey my_hotkey \

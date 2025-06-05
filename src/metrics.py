@@ -21,6 +21,7 @@ class MinerMetrics(BaseModel):
     invalid_shares: int
     difficulty: float
     hashrate: float | None = None  # Optional, may depend on time window
+    worker_name: str | None = None
 
     model_config = ConfigDict(frozen=True)
 
@@ -114,6 +115,7 @@ class MetricsClient:
                     invalid_shares=invalid_shares_map.get(miner_key, 0),
                     difficulty=share_diff_map.get(miner_key, 0.0),
                     hashrate=avg_hashrate_map.get(miner_key, 0.0),
+                    worker_name=miner_key.worker,
                 )
                 result[miner_key] = miner_metrics
             return result
