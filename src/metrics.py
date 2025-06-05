@@ -16,23 +16,18 @@ class MinerKey(BaseModel):
 
 
 class MinerMetrics(BaseModel):
-    uptime: float
-    valid_shares: int
-    invalid_shares: int
-    difficulty: float
-    hashrate: float | None = None  # Optional, may depend on time window
-    worker_name: str | None = None
+    uptime: float = 0.0
+    valid_shares: int = 0
+    invalid_shares: int = 0
+    difficulty: float = 0.0
+    hashrate: float = 0.0
+    worker_name: str
 
     model_config = ConfigDict(frozen=True)
 
     @classmethod
-    def default_instance(cls, worker_name: str | None = None) -> Self:
+    def default_instance(cls, worker_name: str) -> Self:
         return cls(
-            uptime=0.0,
-            valid_shares=0,
-            invalid_shares=0,
-            difficulty=0.0,
-            hashrate=None,
             worker_name=worker_name
         )
 
