@@ -52,17 +52,6 @@ if ENV == "test":
 else:
     origins = [REMOTE_SITE_ORIGIN]
 
-app = FastAPI(prefix="/api", title="HashTensor Validator", lifespan=lifespan)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"] if ENV == "test" else [REMOTE_SITE_ORIGIN],  # Not recommended for production!
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -102,6 +91,18 @@ async def lifespan(app: FastAPI):
 
     task = asyncio.create_task(weights_loop())
     yield
+
+
+app = FastAPI(prefix="/api", title="HashTensor Validator", lifespan=lifespan)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"] if ENV == "test" else [REMOTE_SITE_ORIGIN],  # Not recommended for production!
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
