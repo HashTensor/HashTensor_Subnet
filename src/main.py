@@ -9,6 +9,7 @@ import json
 import time
 from contextlib import asynccontextmanager
 import asyncio
+from fastapi.middleware.cors import CORSMiddleware
 
 from fiber import SubstrateInterface
 
@@ -40,6 +41,27 @@ from .interfaces.database import DatabaseService
 
 
 logger = get_logger(__name__)
+
+
+# CORS setup
+ENV = os.environ.get("ENV", "prod")
+REMOTE_SITE_ORIGIN = os.environ.get("REMOTE_SITE_ORIGIN", "https://your-remote-site.com")
+
+if ENV == "test":
+    origins = ["http://localhost", "http://localhost:3000", "http://127.0.0.1"]
+else:
+    origins = [REMOTE_SITE_ORIGIN]
+
+app = FastAPI(prefix="/api", title="HashTensor Validator", lifespan=lifespan)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @asynccontextmanager
@@ -80,9 +102,6 @@ async def lifespan(app: FastAPI):
 
     task = asyncio.create_task(weights_loop())
     yield
-
-
-app = FastAPI(prefix="/api", title="HashTensor Validator", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -154,6 +173,8 @@ async def get_metrics(validator: Annotated[Validator, Depends(get_validator)]) -
     ]
 
 
-@app.get("/ratings")
-async def get_ratings(validator: Annotated[Validator, Depends(get_validator)]):
-    return await validator.compute_ratings()
+# Only define /ratings if ENV == "test"
+if ENV == "test":
+    @app.get("/ratings")
+    async def get_ratings(validator: Annotated[Validator, Depends(get_validator)]):
+        return await validator.compute_ratings()
