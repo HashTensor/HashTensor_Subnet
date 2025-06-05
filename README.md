@@ -130,9 +130,13 @@ OwnerTAO -->|"Stake / Buyback Alpha"| SubnetBoost
 
 ---
 
-## 🛠️ Alternative: Running with PM2 *(Not Recommended)*
+## 🛑 Alternative: Running with PM2 *(Strongly Not Recommended)*
 
-> **Note:** The recommended way to run the validator is with Docker Compose. PM2 is only for advanced users who need to run outside Docker. Most users should follow the Docker instructions above.
+> **🛑 WARNING:**
+> - The recommended way to run the validator is with Docker Compose.
+> - **PM2 is only for advanced users who need to run outside Docker.**
+> - **There is NO autoupdate support with PM2.**
+> - Most users should follow the Docker instructions above.
 
 If you still want to use PM2:
 
