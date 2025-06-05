@@ -1,4 +1,3 @@
-
 import argparse
 import os
 import socket
@@ -29,8 +28,6 @@ NETWORK_TO_NETUID = {
     FINNEY_NETWORK: FINNEY_NETUID,
     FINNEY_TEST_NETWORK: FINNEY_TEST_NETUID,
 }
-
-MOCKED_VALIDATORS = os.environ.get("MOCKED_VALIDATORS", "").split(",")
 
 
 def check_dependencies():
@@ -150,15 +147,29 @@ async def get_nodes_for_uid(
     return nodes
 
 
+async def is_hashtensor_validator(node):
+    url = f"http://{node['ip']}:{node['port']}/openapi.json"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=3) as resp:
+                if resp.status != 200:
+                    return False
+                data = await resp.json()
+                return data.get("info", {}).get("title") == "HashTensor Validator"
+    except Exception:
+        return False
+
+
 async def get_validators(
     substrate: AsyncSubstrateInterface, netuid: int, block: int | None = None
 ) -> list[dict]:
     nodes = await get_nodes_for_uid(substrate, netuid, block)
-    return (
-        [node for node in nodes if node["vtrust"] > 0]
-        if not MOCKED_VALIDATORS
-        else [node for node in nodes if node["hotkey"] in MOCKED_VALIDATORS]
-    )
+    # Filter nodes with a real IP
+    real_nodes = [node for node in nodes if node["ip"] != "0.0.0.0"]
+    # Run all checks concurrently
+    results = await asyncio.gather(*(is_hashtensor_validator(node) for node in real_nodes)) if real_nodes else []
+    # Return only nodes that passed the check
+    return [node for node, is_valid in zip(real_nodes, results) if is_valid]
 
 
 async def post_to_validator(session, node, payload, signature):
