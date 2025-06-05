@@ -75,7 +75,8 @@ class MetricsClient:
     async def _get_share_diff_counter(
         self, session: aiohttp.ClientSession
     ) -> Dict[MinerKey, float]:
-        query = 'ks_valid_share_diff_counter{wallet=~".+", worker=~".+"}'
+        resolution = f"{int(self.window.total_seconds())}s"
+        query = f'ks_valid_share_diff_counter{{wallet=~".+", worker=~".+"}}[{resolution}]'
         return await self._fetch_metric(session, query, float)
 
     async def _get_avg_hashrate(
@@ -89,7 +90,8 @@ class MetricsClient:
         self, session: aiohttp.ClientSession
     ) -> Dict[MinerKey, float]:
         """Query Prometheus and return uptime (ks_miner_uptime_seconds) per (wallet, worker)."""
-        query = "ks_miner_uptime_seconds"
+        resolution = f"{int(self.window.total_seconds())}s"
+        query = f"sum(increase(ks_miner_uptime_seconds[{resolution}])) by (wallet, worker)"
         return await self._fetch_metric(session, query, float)
 
     async def fetch_metrics(self) -> Dict[MinerKey, MinerMetrics]:
