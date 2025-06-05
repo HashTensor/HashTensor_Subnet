@@ -231,6 +231,8 @@ async def main():
     payload, signature = build_registration_payload(wallet, worker)
     print(f"Registration payload: {json.dumps(payload, indent=2)}")
     print(f"Signature (X-Signature): {signature}")
+
+    print("\nValidator responses:\n")
     async with aiohttp.ClientSession() as session:
         tasks = [
             post_to_validator(session, node, payload, signature)
