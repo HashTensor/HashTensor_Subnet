@@ -31,9 +31,8 @@ class Validator:
     async def get_hotkey_metrics_map(self) -> Dict[str, List[MinerMetrics]]:
         """Load mapping and map metrics to hotkeys. Returns dict[hotkey, List[MinerMetrics]]."""
         metrics = await self.metrics_client.fetch_metrics()
+        mapping = await self.mapping_manager.get_mapping()
         hotkey_metrics: Dict[str, List[MinerMetrics]] = defaultdict(list)
-        for miner_key, miner_metrics in metrics.items():
-            hotkey = await self.mapping_manager.get_hotkey(miner_key.worker)
-            if hotkey:
-                hotkey_metrics[hotkey].append(miner_metrics)
+        for worker, hotkey in mapping.items():
+            hotkey_metrics[hotkey].append(metrics.get(worker, MinerMetrics.default_instance(worker)))
         return dict(hotkey_metrics)

@@ -3,7 +3,7 @@
 
 import asyncio
 from datetime import timedelta, datetime
-from typing import Dict, Any, NamedTuple
+from typing import Dict, Any, NamedTuple, Self
 from pydantic import BaseModel, ConfigDict, Field
 import aiohttp
 
@@ -24,6 +24,17 @@ class MinerMetrics(BaseModel):
     worker_name: str | None = None
 
     model_config = ConfigDict(frozen=True)
+
+    @classmethod
+    def default_instance(cls, worker_name: str | None = None) -> Self:
+        return cls(
+            uptime=0.0,
+            valid_shares=0,
+            invalid_shares=0,
+            difficulty=0.0,
+            hashrate=None,
+            worker_name=worker_name
+        )
 
 
 PROM_QUERY = (
