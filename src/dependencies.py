@@ -60,7 +60,7 @@ def get_database_service(
     config: Annotated[ValidatorSettings, Depends(load_config)],
 ) -> DatabaseService:
     # In production, you might want to use a singleton  or DI container
-    return DatabaseService(config.database_url)
+    return DatabaseService(config.database_url, config.max_workers_per_hotkey)
 
 
 def get_validator(

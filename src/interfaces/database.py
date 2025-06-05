@@ -46,7 +46,7 @@ class SqliteMappingSource(MappingSource):
 
 
 class DatabaseService:
-    def __init__(self, db_url: str = DATABASE_URL):
+    def __init__(self, db_url: str = DATABASE_URL, max_workers: int = 30):
         self.engine = create_engine(
             db_url, connect_args={"check_same_thread": False}
         )
@@ -54,6 +54,7 @@ class DatabaseService:
             autocommit=False, autoflush=False, bind=self.engine
         )
         self.session = self.SessionLocal()
+        self.max_workers = max_workers
 
     async def add_mapping(
         self,
@@ -68,6 +69,10 @@ class DatabaseService:
         )
         if existing:
             raise ValueError("Worker already registered")
+        # Restrict number of workers per hotkey
+        worker_count = self.session.query(HotkeyWorker).filter_by(hotkey=hotkey).count()
+        if worker_count >= self.max_workers:
+            raise ValueError(f"Maximum number of workers ({self.max_workers}) for this hotkey reached")
         new_mapping = HotkeyWorker(
             worker=worker,
             hotkey=hotkey,

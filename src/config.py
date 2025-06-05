@@ -22,6 +22,7 @@ class ValidatorSettings(BaseSettings):
     registration_time_tolerance: timedelta = timedelta(minutes=1)
     verify_signature: bool = True
     set_weights_interval: timedelta = timedelta(minutes=60)
+    max_workers_per_hotkey: int = 30
 
     wallet_name: str = "default"
     wallet_hotkey: str = "default"
