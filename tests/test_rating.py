@@ -140,21 +140,18 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
                         invalid_shares=0,
                         difficulty=15647.46811773941,
                         hashrate=783547108.9145503,
-                    )
-                ],
-                "hotkey1": [
+                    ),
                     MinerMetrics(
                         uptime=FIXED_NOW - 3600,
                         valid_shares=1000,
                         invalid_shares=0,
                         difficulty=10000.0,
                         hashrate=500000000.0,
-                    )
-                ],
+                    ),
+                ]
             },
             {
-                "hotkey1": 0.0,
-                "hotkey1": pytest.approx(0.5016334595, abs=1e-8),
+                "hotkey1": 0.25, # 0.5^2 = 0.25
             },
         ),
         (
@@ -257,3 +254,40 @@ def test_rating_calculator_real_data():
         }
         for hotkey, exp_score in expected.items():
             assert result[hotkey] == exp_score
+
+
+def test_rating_calculator_stub_data():
+    with patch("time.time", return_value=FIXED_NOW):
+        calc = RatingCalculator()
+        metrics_dict = {
+            "stub1": [
+                MinerMetrics(
+                    uptime=FIXED_NOW - 3600,  # 1 hour before now
+                    valid_shares=119,
+                    invalid_shares=0,
+                    difficulty=33260.226740223945,
+                    hashrate=89492552.244341,
+                ),
+                MinerMetrics(
+                    uptime=FIXED_NOW - 3600,  # 1 hour before now
+                    valid_shares=0,
+                    invalid_shares=0,
+                    difficulty=0,
+                    hashrate=0,
+                ),
+            ],
+            "stub2": [
+                MinerMetrics(
+                    uptime=FIXED_NOW - 3600,  # 1 hour before now
+                    valid_shares=5,
+                    invalid_shares=0,
+                    difficulty=85.89934592,
+                    hashrate=26177825.669120003,
+                )
+            ],
+        }
+        result = calc.rate_all(metrics_dict)
+        print("stub test result:", result)
+        assert result["stub1"] > result["stub2"]
+        assert result["stub1"] > 0
+        assert result["stub2"] >= 0

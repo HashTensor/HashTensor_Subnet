@@ -21,12 +21,12 @@ class MinerMetrics(BaseModel):
     invalid_shares: int = 0
     difficulty: float = 0.0
     hashrate: float = 0.0
-    worker_name: str
+    worker_name: str | None = None
 
     model_config = ConfigDict(frozen=True)
 
     @classmethod
-    def default_instance(cls, worker_name: str) -> Self:
+    def default_instance(cls, worker_name: str | None = None) -> Self:
         return cls(
             worker_name=worker_name
         )
