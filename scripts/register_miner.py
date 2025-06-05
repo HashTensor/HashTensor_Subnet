@@ -1,14 +1,12 @@
+
 import argparse
 import os
 import socket
 import struct
-import asyncio
 import aiohttp
 import json
 import time
-from bittensor_wallet import Wallet, Config
-from async_substrate_interface import AsyncSubstrateInterface
-from scalecodec.utils.ss58 import ss58_encode
+import sys
 
 # Only keep needed constants
 FINNEY_NETWORK = "finney"
@@ -33,6 +31,34 @@ NETWORK_TO_NETUID = {
 }
 
 MOCKED_VALIDATORS = os.environ.get("MOCKED_VALIDATORS", "").split(",")
+
+
+def check_dependencies():
+    required_packages = {
+        'aiohttp': 'aiohttp',
+        'bittensor_wallet': 'bittensor',
+        'async_substrate_interface': 'async-substrate-interface',
+        'scalecodec': 'scalecodec'
+    }
+    
+    missing_packages = []
+    for module, package in required_packages.items():
+        try:
+            __import__(module)
+        except ImportError:
+            missing_packages.append(package)
+    
+    if missing_packages:
+        print("Error: Missing required packages. Please install them using pip:")
+        print(f"pip install {' '.join(missing_packages)}")
+        sys.exit(1)
+
+check_dependencies()
+
+import asyncio
+from bittensor_wallet import Wallet, Config
+from async_substrate_interface import AsyncSubstrateInterface
+from scalecodec.utils.ss58 import ss58_encode
 
 
 def get_chain_endpoint(
