@@ -1,5 +1,5 @@
 services:
-  app:
+  hashtensor-validator:
     image: ghcr.io/hashtensor/hashtensor-validator:latest
     ports:
       - "${PORT:-8000}:8000"
