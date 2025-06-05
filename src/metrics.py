@@ -88,7 +88,7 @@ class MetricsClient:
         self, session: aiohttp.ClientSession
     ) -> Dict[MinerKey, float]:
         resolution = f"{int(self.window.total_seconds())}s" 
-        query = f"sum(rate(ks_valid_share_diff_counter[{resolution}])) by (wallet, worker) * 1e9"
+        query = f"sum(rate(ks_valid_share_diff_counter[{resolution}]) * 1e9) by (wallet, worker)"
         return await self._fetch_metric(session, query, float)
 
     async def _get_uptime(
