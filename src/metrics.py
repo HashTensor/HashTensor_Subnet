@@ -33,10 +33,11 @@ PROM_QUERY = (
 
 class MetricsClient:
     def __init__(
-        self, endpoint: str, window: timedelta = timedelta(minutes=60)
+        self, endpoint: str, window: timedelta = timedelta(minutes=60), pool_owner_wallet: str | None = None
     ):
         self.endpoint = endpoint
         self.window = window
+        self.pool_owner_wallet = pool_owner_wallet
 
     async def _fetch_metric(
         self, session: aiohttp.ClientSession, query: str, value_type=int
@@ -109,6 +110,8 @@ class MetricsClient:
             )
             result = {}
             for miner_key, valid_shares in valid_shares_map.items():
+                if self.pool_owner_wallet and miner_key.wallet != self.pool_owner_wallet:
+                    continue
                 miner_metrics = MinerMetrics(
                     uptime=uptime_map.get(miner_key, 0.0),
                     valid_shares=valid_shares,

@@ -26,7 +26,7 @@ worker_provider: WorkerProvider | None = None
 def get_metrics_client(
     config: Annotated[ValidatorSettings, Depends(load_config)],
 ) -> MetricsClient:
-    return MetricsClient(config.prometheus_endpoint)
+    return MetricsClient(config.prometheus_endpoint, pool_owner_wallet=config.kaspa_pool_owner_wallet)
 
 
 def get_mapping_source(
