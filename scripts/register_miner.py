@@ -36,7 +36,7 @@ MOCKED_VALIDATORS = os.environ.get("MOCKED_VALIDATORS", "").split(",")
 def check_dependencies():
     required_packages = {
         'aiohttp': 'aiohttp',
-        'bittensor_wallet': 'bittensor',
+        'bittensor_wallet': 'bittensor-wallet',
         'async_substrate_interface': 'async-substrate-interface',
         'scalecodec': 'scalecodec'
     }
