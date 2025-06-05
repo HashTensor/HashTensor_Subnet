@@ -18,8 +18,11 @@
 2. **Start your ASIC/GPU Kaspa miner using the following pool and wallet:**
 
    - **Pool:** `pool.hashtensor.com:5555`
-   - **Wallet address (pool owner):**  
-     `kaspa:qr4ksh6s3rmy5f4qyql2kh7p9z7f4c55da5r5gz2nnsd8ctt4k69whtr4u0wp`
+   - **Wallet address (pool owner):**
+     - For **mainnet (Finney)**:  
+       `kaspa:qr4ksh6s3rmy5f4qyql2kh7p9z7f4c55da5r5gz2nnsd8ctt4k69whtr4u0wp`
+     - For **testnet**:  
+       `kaspa:qq7yl7tjhkyr56x380j7hpa2r4jz97dyqn74a69wumpe5rv97wyxk4cxa7e7t`
    - **Worker name:** *Choose a unique name for your worker.*
 
    > **Note:**
