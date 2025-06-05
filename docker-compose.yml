@@ -5,6 +5,7 @@ services:
       - "${PORT:-8000}:8000"
     environment:
       - PORT=${PORT:-8000}
+      - DATABASE_URL=sqlite:///data/mapping.db
       - PROMETHEUS_ENDPOINT=http://pool.hashtensor.com:9090
       - WALLET_NAME=${WALLET_NAME:-default}
       - WALLET_HOTKEY=${WALLET_HOTKEY:-default}
@@ -12,7 +13,7 @@ services:
       - SUBTENSOR_NETWORK=${SUBTENSOR_NETWORK:-finney}
     volumes:
       - ~/.bittensor:/root/.bittensor
-      - ./data:/app/data
+      - ./.hashtensor:/app/data
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
