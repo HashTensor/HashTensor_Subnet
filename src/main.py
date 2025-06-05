@@ -4,7 +4,7 @@
 from datetime import timedelta
 import os
 from fastapi import Depends, FastAPI, HTTPException, Header
-from typing import Annotated
+from typing import Annotated, List
 import json
 import time
 from contextlib import asynccontextmanager
@@ -20,7 +20,7 @@ from .interfaces.worker_provider import WorkerProvider
 
 from .validator import Validator
 
-from .models import HotkeyWorkerRegistration
+from .models import HotkeyWorkerRegistration, MetricsResponse
 
 from .config import ValidatorSettings, load_config
 from fiber.chain import chain_utils
@@ -62,6 +62,7 @@ async def lifespan(app: FastAPI):
     async def weights_loop():
         while True:
             try:
+                await asyncio.sleep(timedelta(minutes=1).total_seconds())
                 await asyncio.to_thread(
                     lambda: asyncio.run(
                         set_weights_task(
@@ -73,7 +74,6 @@ async def lifespan(app: FastAPI):
                         )
                     )
                 )
-                await asyncio.sleep(timedelta(minutes=1).total_seconds())
             except Exception as e:
                 logger.exception(f"Error in set_weights task: {e}")
                 os._exit(1)
@@ -141,8 +141,17 @@ async def register_hotkey_worker(
 
 
 @app.get("/metrics")
-async def get_metrics(validator: Annotated[Validator, Depends(get_validator)]):
-    return await validator.get_hotkey_metrics_map()
+async def get_metrics(validator: Annotated[Validator, Depends(get_validator)]) -> List[MetricsResponse]:
+    hotkey_metrics = await validator.get_hotkey_metrics_map()
+    return [
+        MetricsResponse(
+            hotkey=hotkey,
+            active_workers=len([m for m in metrics if m.uptime > 0]),
+            total_workers=len(metrics),
+            metrics=metrics,
+        )
+        for hotkey, metrics in hotkey_metrics.items()
+    ]
 
 
 @app.get("/ratings")
