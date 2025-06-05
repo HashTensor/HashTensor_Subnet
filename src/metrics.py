@@ -96,7 +96,7 @@ class MetricsClient:
     ) -> Dict[MinerKey, float]:
         """Query Prometheus and return uptime (ks_miner_uptime_seconds) per (wallet, worker)."""
         resolution = f"{int(self.window.total_seconds())}s"
-        query = f"sum(increase(ks_miner_uptime_seconds[{resolution}])) by (wallet, worker)"
+        query = f"ks_miner_uptime_seconds[{resolution}]"
         return await self._fetch_metric(session, query, float)
 
     async def fetch_metrics(self) -> Dict[MinerKey, MinerMetrics]:
