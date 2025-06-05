@@ -5,8 +5,6 @@ services:
       - "${PORT:-8000}:8000"
     environment:
       - PORT=${PORT:-8000}
-      - DATABASE_URL=sqlite:///data/mapping.db
-      - KASPA_POOL_OWNER_WALLET=kaspa:qr4ksh6s3rmy5f4qyql2kh7p9z7f4c55da5r5gz2nnsd8ctt4k69whtr4u0wp
       - PROMETHEUS_ENDPOINT=http://pool.hashtensor.com:9090
       - WALLET_NAME=${WALLET_NAME:-default}
       - WALLET_HOTKEY=${WALLET_HOTKEY:-default}
@@ -17,6 +15,7 @@ services:
       - ./data:/app/data
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
 
   watchtower:
     image: containrrr/watchtower
