@@ -13,6 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from fiber import SubstrateInterface
 
+from .mapping import MappingManager
+
 from .tasks import set_weights_task
 
 from .utils import is_hotkey_registered, verify_signature
@@ -173,6 +175,10 @@ async def get_metrics(validator: Annotated[Validator, Depends(get_validator)]) -
         for hotkey, metrics in hotkey_metrics.items()
     ]
 
+
+@app.get("/mappings")
+async def get_mappings(mapping_manager: Annotated[MappingManager, Depends(get_mapping_manager)]):
+    return await mapping_manager.get_mapping()
 
 # Only define /ratings if ENV == "test"
 if ENV == "test":
