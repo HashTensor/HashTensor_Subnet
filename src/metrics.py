@@ -16,10 +16,22 @@ class MinerKey(BaseModel):
 
 
 class MinerMetrics(BaseModel):
+    """
+    Metrics for a single miner worker over a given window.
+
+    - uptime: Uptime in seconds over the window.
+    - valid_shares: Number of valid shares submitted in the window.
+    - invalid_shares: Number of invalid shares submitted in the window.
+    - total_difficulty: Sum of the difficulties of all valid shares in the window.
+    - difficulty: Average difficulty per valid share in the window (total_difficulty / valid_shares).
+    - hashrate: Estimated hashrate in H/s, calculated as (valid_shares * avg_difficulty * 2^32) / window_seconds.
+    - worker_name: Name of the worker.
+    """
     uptime: float = 0.0
     valid_shares: int = 0
     invalid_shares: int = 0
-    difficulty: float = 0.0
+    total_difficulty: float = 0.0
+    difficulty: float = 0.0  # Average difficulty per share
     hashrate: float = 0.0
     worker_name: str | None = None
 
@@ -72,6 +84,7 @@ class MetricsClient:
     async def _get_valid_shares(
         self, session: aiohttp.ClientSession
     ) -> Dict[MinerKey, int]:
+        """Get number of valid shares per (wallet, worker)."""
         resolution = f"{int(self.window.total_seconds())}s"
         query = f"sum(increase(ks_valid_share_counter[{resolution}])) by (wallet, worker)"
         return await self._fetch_metric(session, query, int)
@@ -83,18 +96,12 @@ class MetricsClient:
         query = f"sum(increase(ks_invalid_share_counter[{resolution}])) by (wallet, worker)"
         return await self._fetch_metric(session, query, int)
 
-    async def _get_share_diff_counter(
+    async def _get_total_share_diff(
         self, session: aiohttp.ClientSession
     ) -> Dict[MinerKey, float]:
+        """Get total difficulty of all shares per (wallet, worker)."""
         resolution = f"{int(self.window.total_seconds())}s"
-        query = f'sum(rate(ks_valid_share_diff_counter{{wallet=~".+", worker=~".+"}}[{resolution}])) by (wallet, worker)'
-        return await self._fetch_metric(session, query, float)
-
-    async def _get_avg_hashrate(
-        self, session: aiohttp.ClientSession
-    ) -> Dict[MinerKey, float]:
-        resolution = f"{int(self.window.total_seconds())}s" 
-        query = f"sum(rate(ks_valid_share_diff_counter[{resolution}]) * 1e9) by (wallet, worker)"
+        query = f"sum(increase(ks_valid_share_diff_counter[{resolution}])) by (wallet, worker)"
         return await self._fetch_metric(session, query, float)
 
     async def _get_uptime(
@@ -106,31 +113,40 @@ class MetricsClient:
         return await self._fetch_metric(session, query, float)
 
     async def fetch_metrics(self) -> Dict[MinerKey, MinerMetrics]:
-        """Fetch and parse metrics from Prometheus endpoint for all wallets."""
+        """
+        Fetch and parse metrics from Prometheus endpoint for all wallets.
+        
+        - ks_valid_share_counter: Number of valid shares (from Go: stats.SharesFound.Add(1))
+        - ks_valid_share_diff_counter: Sum of share difficulties (from Go: stats.SharesDiff.Add(state.stratumDiff.hashValue))
+        - Hashrate is calculated as (valid_shares * avg_difficulty * 2^32) / window_seconds
+        """
         async with aiohttp.ClientSession() as session:
             (
                 valid_shares_map,
                 invalid_shares_map,
-                share_diff_map,
+                total_diff_map,
                 uptime_map,
             ) = await asyncio.gather(
                 self._get_valid_shares(session),
                 self._get_invalid_shares(session),
-                self._get_share_diff_counter(session),
+                self._get_total_share_diff(session),
                 self._get_uptime(session),
             )
             result = {}
             window_seconds = int(self.window.total_seconds())
+            
             for miner_key, valid_shares in valid_shares_map.items():
                 if self.pool_owner_wallet and miner_key.wallet != self.pool_owner_wallet:
                     continue
-                share_diff = share_diff_map.get(miner_key, 0.0)
-                hashrate = (valid_shares * share_diff * 2**32) / window_seconds
+                total_diff = total_diff_map.get(miner_key, 0.0)
+                avg_difficulty = total_diff / valid_shares if valid_shares > 0 else 0.0
+                hashrate = (valid_shares * avg_difficulty * 2**32) / window_seconds if valid_shares > 0 else 0.0
                 miner_metrics = MinerMetrics(
                     uptime=uptime_map.get(miner_key, 0.0),
                     valid_shares=valid_shares,
                     invalid_shares=invalid_shares_map.get(miner_key, 0),
-                    difficulty=share_diff,
+                    total_difficulty=total_diff,
+                    difficulty=avg_difficulty,  # Store average difficulty per share
                     hashrate=hashrate,
                     worker_name=miner_key.worker,
                 )
