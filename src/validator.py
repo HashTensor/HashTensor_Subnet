@@ -1,7 +1,7 @@
 # validator.py
 # Main validation logic for Bittensor subnet
 
-from .metrics import MetricsClient
+from .metrics import MetricsClient, MinerKey
 from .mapping import MappingManager
 from .rating import RatingCalculator
 from .config import ValidatorSettings
@@ -34,5 +34,6 @@ class Validator:
         mapping = await self.mapping_manager.get_mapping()
         hotkey_metrics: Dict[str, List[MinerMetrics]] = defaultdict(list)
         for worker, hotkey in mapping.items():
-            hotkey_metrics[hotkey].append(metrics.get(worker, MinerMetrics.default_instance(worker)))
+            key = MinerKey(wallet=hotkey, worker=worker)
+            hotkey_metrics[hotkey].append(metrics.get(key, MinerMetrics.default_instance(worker)))
         return dict(hotkey_metrics)
