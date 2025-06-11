@@ -87,7 +87,7 @@ class MetricsClient:
         self, session: aiohttp.ClientSession
     ) -> Dict[MinerKey, float]:
         resolution = f"{int(self.window.total_seconds())}s"
-        query = f'ks_valid_share_diff_counter{{wallet=~".+", worker=~".+"}}[{resolution}]'
+        query = f'sum(rate(ks_valid_share_diff_counter{{wallet=~".+", worker=~".+"}}[{resolution}])) by (wallet, worker)'
         return await self._fetch_metric(session, query, float)
 
     async def _get_avg_hashrate(
