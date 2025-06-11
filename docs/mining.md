@@ -4,6 +4,21 @@
 
 ## 🚀 Quick Overview
 
+> **❗ Before you start:**
+>
+> You must register your hotkey in the HashTensor subnet before mining.
+>
+> - For the Finney network, run:
+>   ```sh
+>   btcli subnet register --netuid 16
+>   ```
+> - For the testnet, run:
+>   ```sh
+>   btcli subnet register --netuid 368 --network test
+>   ```
+>
+> If you skip this step, you cannot participate in the subnet.
+
 1. **Register your hotkey in the subnet:**
 
    - For the **Finney network** (mainnet):
