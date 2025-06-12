@@ -1,36 +1,12 @@
 # HashTensor Miner Registration Guide
 
+> **Note:** For subnet registration and system overview, see the [main README](../README.md).
+
 ---
 
 ## 🚀 Quick Overview
 
-> **❗ Before you start:**
->
-> You must register your hotkey in the HashTensor subnet before mining.
->
-> - For the Finney network, run:
->   ```sh
->   btcli subnet register --netuid 16
->   ```
-> - For the testnet, run:
->   ```sh
->   btcli subnet register --netuid 368 --network test
->   ```
->
-> If you skip this step, you cannot participate in the subnet.
-
-1. **Register your hotkey in the subnet:**
-
-   - For the **Finney network** (mainnet):
-     ```bash
-     btcli subnet register --netuid 16
-     ```
-   - For the **testnet**:
-     ```bash
-     btcli subnet register --netuid 368 --network test
-     ```
-
-2. **Start your ASIC/GPU Kaspa miner using the following pool and wallet:**
+1. **Start your ASIC/GPU Kaspa miner using the following pool and wallet:**
 
    - **Pool:** `pool.hashtensor.com:5555`
    - **Wallet address (pool owner):**
@@ -43,7 +19,7 @@
    > **Note:**
    > If you use a different Kaspa wallet for mining (not the pool owner wallet above), you can still mine Kaspa in our pool and increase your hashrate, but you will **not** be able to register your worker in the subnet or receive Alpha token rewards in Bittensor.
 
-3. **Bind your hotkey to your worker using the binding script:**
+2. **Bind your hotkey to your worker using the binding script:**
 
    > **🟢 Recommended:** Create and activate a Python virtual environment (venv) before running the script. This helps keep dependencies isolated and your system Python clean.
    >
@@ -71,7 +47,7 @@
 
 ### 1. Prerequisites
 
-- **A registered Bittensor hotkey** in the HashTensor subnet (use `btcli subnet register`).
+- **A registered Bittensor hotkey** in the HashTensor subnet (see [main README](../README.md)).
 - **A Kaspa mining worker** with a unique, private name.
 - **Your Bittensor wallet** (wallet name and hotkey).
 
@@ -174,7 +150,7 @@ curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/s
 - **"Worker not found":**  
   Make sure your worker is running and the name is correct.
 - **"Hotkey not registered":**  
-  Register your hotkey in the subnet first using `btcli subnet register`.
+  Register your hotkey in the subnet first (see [main README](../README.md)).
 - **"Registration time is too far from current UTC time":**  
   Try running the script again.
 - **"Invalid signature":**  
