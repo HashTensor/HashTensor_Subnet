@@ -47,7 +47,7 @@ logger = get_logger(__name__)
 
 # CORS setup
 ENV = os.environ.get("ENV", "prod")
-REMOTE_SITE_ORIGIN = os.environ.get("REMOTE_SITE_ORIGIN", "https://your-remote-site.com")
+REMOTE_SITE_ORIGIN = os.environ.get("REMOTE_SITE_ORIGIN", "https://hashtensor.com")
 
 if ENV == "test":
     origins = ["http://localhost", "http://localhost:3000", "http://127.0.0.1"]
