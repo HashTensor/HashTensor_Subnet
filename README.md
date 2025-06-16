@@ -179,6 +179,9 @@ OwnerTAO -->|"Stake / Buyback Alpha"| SubnetBoost
 - Reliable internet connection
 - Sufficient system RAM and storage for mining software
 
+Watch the full setup guide for mining on the HashTensor Subnet:
+[[Watch the video]](https://www.youtube.com/watch?v=PzJQRyCHb-4)
+
 ### Validator
 
 | Component   | Requirement                                 |
