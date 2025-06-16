@@ -200,6 +200,8 @@ They just analyze data and **assign weights properly.**
 
 For detailed installation and configuration instructions, please refer to the guides above.
 
+---
+
 ## Questions
 
 **Can multiple workers be linked to one miner hotkey?**  
