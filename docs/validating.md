@@ -16,7 +16,7 @@ This guide will walk you through setting up a HashTensor validator node.
 
 2. **Download the latest `docker-compose.yml` from the official repository:**
    ```sh
-   curl -L -o docker-compose.yml https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/docker-compose.yml
+   curl -L -o docker-compose.yml https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/docker-compose.yml
    ```
 
 3. **Start the validator (and watchtower) in the background:**

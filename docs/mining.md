@@ -31,7 +31,7 @@
    > You can deactivate the venv later with `deactivate`. This step is optional but recommended.
 
    ```bash
-   curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/bind_worker.py | python3 - \
+   curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/bind_worker.py | python3 - \
      --worker YOUR_WORKER_NAME \
      --wallet.name my_wallet \
      --wallet.hotkey my_hotkey \
@@ -94,7 +94,7 @@ cd 1.76
 - **Immediately run the registration script** to bind your hotkey to your worker:
 
   ```bash
-  curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/bind_worker.py | python3 - \
+  curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/bind_worker.py | python3 - \
     --worker YOUR_WORKER_NAME \
     --wallet.name <wallet_name> \
     --wallet.hotkey <hotkey_name> \
@@ -122,14 +122,14 @@ cd 1.76
 
 ```bash
 # Register first worker
-curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/bind_worker.py | python3 - \
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/bind_worker.py | python3 - \
   --worker worker1 \
   --wallet.name my_wallet \
   --wallet.hotkey my_hotkey \
   --subtensor.network finney
 
 # Register second worker
-curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/develop/scripts/bind_worker.py | python3 - \
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/bind_worker.py | python3 - \
   --worker worker2 \
   --wallet.name my_wallet \
   --wallet.hotkey my_hotkey \
