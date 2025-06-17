@@ -17,11 +17,9 @@ HashTensor captures the value of mining by redirecting hashrate into a performan
 
 Here's how it works:
 - Miners contribute hashrate to supported PoW networks (starting with Kaspa).
-- Initially, All mined KAS is initially collected by the HashTensor wallet.
-- That KAS is converted into TAO, then used to buy back Subnet 16 Alpha tokens from the open market.
-- A portion of each buyback is permanently burned to reduce total supply and reinforce Alpha's deflationary nature.
-- Currently, 5% of each buyback is burned. Over time, this will scale up to 90% as part of our phased fee reduction model.
-- Miner fees will gradually decrease from 100% to 10%, enabling dual rewards while boosting Alpha’s value through aggressive buybacks and burns.
+- Initially, all mined KAS is collected by the subnet wallet. With the next update, 95% will go directly to the miner’s wallet, and 5% to the subnet wallet as a pool fee.
+- The KAS collected from pool fees is converted into TAO, then used to buy back Subnet 16 Alpha tokens from the open market.
+- Each buyback burns 90% of Alpha, cutting supply and strengthening its deflationary design. This ensures the team no longer has access to those tokens.
 
 This model transforms raw hashrate into verifiable economic output, rewarding miners while systematically increasing the scarcity and value of Alpha over time.
 
@@ -31,16 +29,10 @@ Current fees percentage:
 - miners fee: 100%
 - ⁠buy&burn ALPHA: 5% 
 
-Goal with the next updates: 
-- miners fee: 10%
+Goal with the next update: 
+- miners fee: 5%
 - ⁠buy&burn ALPHA: 90% 
 
-
-### Coming Updates
-
-In the upcoming monthly updates, we plan to progressively reduce the miner fee down to 10% while increasing the buy & burn percentage up to 90%. This means miners will become increasingly profitable (eventually earning dual rewards) while the alpha token will be bought and burned more aggressively.
-
-Our goal is to reach these target thresholds within 3 to 6 months, depending on the adoption rate of the subnet. This phased approach ensures the long-term sustainability of the subnet without requiring the team to sell alpha tokens.
 
 ## The Core Commodity of HashTensor
 
@@ -214,16 +206,10 @@ Yes. A single hotkey can support multiple workers. There’s no hard limit, mine
 Not directly. Validators receive Alpha for evaluating miner performance on Subnet 16. A future update may introduce validator revenue-sharing from the subnet’s earnings.
 
 **Is all mined KAS collected by the HashTensor wallet?**  
-At launch, yes. All mined KAS is collected by the subnet wallet. In future updates, we plan to introduce a pool-based system where miners receive the majority of mined KAS, with a small fee portion used for Alpha buybacks and token burns.
+Currently, yes. With the upcoming update, 95% of mined KAS will go directly to the miner’s wallet, and only 5% will go to HashTensor as a pool fee.
 
 **When do Alpha buybacks start, and are they automated?**  
 Buybacks will begin shortly after the subnet launch. Initially, they will be manual and publicly announced on our X page. 
 
 **When and how are Alpha tokens burned?**  
 Alpha burns will begin after the first buyback and are executed using Bittensor’s native burn extrinsic. All burns are transparent and verifiable on-chain.
-
-**Will the Alpha burn percentage increase over time?**  
-Yes. While buybacks initially burn a small portion of Alpha, the percentage will gradually increase toward 90% as the subnet evolves and miner fees are reduced.
-
-**What is the burn and fee timeline?**  
-The goal is to progressively reach a 10% miner fee and 90% Alpha burn ratio over the next 3–6 months, depending on adoption and network conditions.
