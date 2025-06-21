@@ -157,7 +157,81 @@ curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scri
 
 ---
 
-### 6. Common Issues
+### 6. Unbinding Workers
+
+When you need to remove a worker from the subnet (e.g., when decommissioning hardware or changing worker names), you can use the unbind scripts.
+
+#### **Unbind a Single Worker**
+
+To unbind a specific worker from your hotkey:
+
+```bash
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/unbind_worker.py | python3 - \
+  --worker YOUR_WORKER_NAME \
+  --wallet.name my_wallet \
+  --wallet.hotkey my_hotkey \
+  --subtensor.network finney
+```
+
+**Example:**
+```bash
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/unbind_worker.py | python3 - \
+  --worker 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty_worker1 \
+  --wallet.name my_wallet \
+  --wallet.hotkey my_hotkey \
+  --subtensor.network finney
+```
+
+#### **Unbind All Workers for a Hotkey**
+
+To unbind all workers associated with your hotkey at once:
+
+```bash
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/unbind_all.py | python3 - \
+  --wallet.name my_wallet \
+  --wallet.hotkey my_hotkey \
+  --subtensor.network finney
+```
+
+**⚠️ Important Notes:**
+- The `unbind_all` script will discover all workers registered to your hotkey across all validators
+- It will show you the list of workers before proceeding
+- **You must confirm with "yes"** to proceed with the unbinding
+- This action cannot be undone - workers will need to be re-registered if you want to use them again
+
+**Example Output:**
+```
+Wallet hotkey: 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty
+Network: finney
+Found 15 validators
+
+Fetching mappings from validators...
+Found 2 workers in validator 5ABC...: ['worker1', 'worker2']
+Found 1 workers in validator 5DEF...: ['worker3']
+
+Total unique workers to unbind: 3
+Workers: ['worker1', 'worker2', 'worker3']
+
+Do you want to unbind all 3 workers? (yes/no): yes
+
+Unbinding 3 workers...
+
+Unbinding worker: worker1
+Validator 5ABC... unbind response: {"message":"Worker unbound successfully"}
+Validator 5DEF... unbind response: {"message":"Worker unbound successfully"}
+...
+
+Unbind process completed for 3 workers
+```
+
+#### **When to Use Unbind Scripts**
+
+- **Single worker unbind:** When decommissioning a specific mining rig or changing a worker's name
+- **Unbind all:** When switching to a new hotkey, decommissioning all mining operations, or troubleshooting registration issues
+
+---
+
+### 7. Common Issues
 
 #### ⚠️ Miner Startup Errors
 
@@ -177,21 +251,29 @@ curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scri
 - **"Invalid signature":**  
   Check your wallet credentials.
 
+#### 🔗 Unbind Errors
+
+- **"Worker not found for this hotkey":**  
+  The worker is not registered to your hotkey, or it was already unbound.
+- **"Worker already unbound":**  
+  The worker has already been unbound from your hotkey.
+
 ---
 
-### 7. Security Tips
+### 8. Security Tips
 
 - Never share your worker name **before registration**.
 - If your worker name is compromised, stop mining and restart with a new name.
 - Use unique worker names for each mining instance.
 - **Always include your hotkey in the worker name** for security validation.
 - Register immediately after starting your miner.
+- **Be careful with unbind_all** - it will remove all workers for your hotkey and requires re-registration.
 
 ---
 
-### 8. Script Requirements
+### 9. Script Requirements
 
-> The registration script requires:
+> The registration and unbind scripts require:
 > - Python 3.12+
 > - The following Python packages:  
 >   `bittensor-wallet`, `async-substrate-interface`, `scalecodec`, `aiohttp`
