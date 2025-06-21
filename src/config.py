@@ -25,7 +25,9 @@ class ValidatorSettings(BaseSettings):
     verify_signature: bool = True
     set_weights_interval: timedelta = timedelta(minutes=60)
     max_workers_per_hotkey: int = 30
-
+    sync_hotkey_workers_interval: timedelta = timedelta(minutes=5)
+    disable_set_weights: bool = False
+    
     wallet_name: str = "default"
     wallet_hotkey: str = "default"
     wallet_path: str = "~/.bittensor/wallets/"

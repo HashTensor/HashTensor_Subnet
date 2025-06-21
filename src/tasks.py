@@ -1,18 +1,15 @@
 import asyncio
-import socket
-import struct
 import time
 import aiohttp
 import json
 
 from fiber import Keypair, SubstrateInterface
-from fiber.chain.models import Node
 
 from src.constants import MIN_WEIGHTED_STAKE
 
 from .set_weights import set_weights
 
-from .config import ValidatorSettings, load_config
+from .config import ValidatorSettings
 from .validator import Validator
 from fiber.utils import get_logger
 
@@ -24,13 +21,10 @@ from .interfaces.database import (
 from .utils import (
     get_stake_weights,
     verify_signature,
-    parse_ip,
     fix_node_ip,
     is_hashtensor_validator,
     fetch_hotkey_workers_from_validator,
 )
-from .dependencies import get_substrate
-from . import __version__ as version
 
 logger = get_logger(__name__)
 
@@ -130,6 +124,7 @@ async def sync_hotkey_workers_task(
         hotkey = worker_obj["hotkey"]
         registration_time = worker_obj["registration_time"]
         signature = worker_obj["signature"]
+
         exists = db_service.session.query(
             db_service.session.query(HotkeyWorker)
             .filter_by(worker=worker)
@@ -162,3 +157,5 @@ async def sync_hotkey_workers_task(
     logger.info(
         f"[sync_hotkey_workers_task] Done. Added: {added}, Skipped: {skipped}, Failed: {failed}"
     )
+
+# TODO: Add task to clean up workers that are unbound

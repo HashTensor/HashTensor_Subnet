@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator, computed_field
 from scalecodec.utils.ss58 import ss58_decode
-from typing import List, Optional
+from typing import List
 
 from .metrics import MinerMetrics
 
@@ -20,6 +20,11 @@ class HotkeyWorkerRegistration(BaseModel):
         except Exception:
             raise ValueError("Invalid ss58 address")
         return v
+
+
+class UnbindWorkerRequest(BaseModel):
+    hotkey: str
+    worker: str
 
 
 class MetricsResponse(BaseModel):

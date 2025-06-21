@@ -34,6 +34,7 @@ class HotkeyWorker(Base):
         BigInteger, nullable=False
     )
     signature: Mapped[str] = mapped_column(String, nullable=False)
+    unbind_signature: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class SqliteMappingSource(MappingSource):
@@ -50,7 +51,7 @@ class SqliteMappingSource(MappingSource):
         # Load mapping from SQLite database: worker -> hotkey
         # This is a synchronous DB call, but the method is async for interface compatibility
         result = {}
-        for row in self.session.query(HotkeyWorker).all():
+        for row in self.session.query(HotkeyWorker).filter(HotkeyWorker.unbind_signature.is_(None)).all():
             result[row.worker] = row.hotkey
         return result
 
@@ -81,7 +82,7 @@ class DatabaseService:
             raise ValueError("Worker already registered")
         # Restrict number of workers per hotkey
         worker_count = (
-            self.session.query(HotkeyWorker).filter_by(hotkey=hotkey).count()
+            self.session.query(HotkeyWorker).filter_by(hotkey=hotkey, unbind_signature=None).count()
         )
         if worker_count >= self.max_workers:
             raise ValueError(
@@ -132,6 +133,22 @@ class DatabaseService:
             }
             for row in results
         ]
+
+    async def mark_worker_unbound(
+        self,
+        hotkey: str,
+        worker: str,
+        unbind_signature: str,
+    ) -> None:
+        # Mark the worker as unbound by setting unbind_signature
+        obj = self.session.query(HotkeyWorker).filter_by(hotkey=hotkey, worker=worker).first()
+        if not obj:
+            raise ValueError("Worker not found for this hotkey")
+        if obj.unbind_signature:
+            raise ValueError("Worker already unbound")
+        obj.unbind_signature = unbind_signature
+        self.session.commit()
+        return None
 
 
 class DynamicConfig(Base):

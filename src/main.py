@@ -23,7 +23,7 @@ from .interfaces.worker_provider import WorkerProvider
 
 from .validator import Validator
 
-from .models import HotkeyWorkerRegistration, MetricsResponse
+from .models import HotkeyWorkerRegistration, MetricsResponse, UnbindWorkerRequest
 
 from .config import ValidatorSettings, load_config
 from fiber.chain import chain_utils
@@ -98,13 +98,30 @@ async def lifespan(app: FastAPI):
     async def sync_hotkey_workers_loop():
         while True:
             try:
-                await sync_hotkey_workers_task(db_service, config, substrate)
+                await asyncio.to_thread(
+                    lambda: asyncio.run(
+                        sync_hotkey_workers_task(db_service, config, substrate)
+                    )
+                )
             except Exception as e:
                 logger.exception(f"Error in sync_hotkey_workers_task: {e}")
-            await asyncio.sleep(60)  # 1 minute
+            await asyncio.sleep(
+                timedelta(minutes=config.sync_hotkey_workers_interval).total_seconds()
+            )
 
-    task1 = asyncio.create_task(weights_loop())
+    # Create tasks conditionally based on feature flags
+    tasks = []
+    
+    if not config.disable_set_weights:
+        task1 = asyncio.create_task(weights_loop())
+        tasks.append(task1)
+        logger.info("Set weights task started")
+    else:
+        logger.info("Set weights task disabled by DISABLE_SET_WEIGHTS flag")
+    
     task2 = asyncio.create_task(sync_hotkey_workers_loop())
+    tasks.append(task2)
+    
     yield
 
 
@@ -156,7 +173,13 @@ async def register_hotkey_worker(
             status_code=400,
             detail="Registration time is too far from current UTC time.",
         )
-    # 2. Check worker exists
+    # 2. Security check: worker name must contain the hotkey
+    if reg.hotkey not in reg.worker:
+        raise HTTPException(
+            status_code=400,
+            detail="Worker name must contain the hotkey for security validation.",
+        )
+    # 3. Check worker exists
     if not await worker_provider.is_worker_exists(
         config.kaspa_pool_owner_wallet, reg.worker
     ):
@@ -165,12 +188,12 @@ async def register_hotkey_worker(
             detail=f"Worker not found. Make sure you are using the correct wallet address\n"
             + f"Kaspa Pool Owner Wallet: {config.kaspa_pool_owner_wallet}",
         )
-    # 3. Verify signature on the full request object (sorted keys)
+    # 4. Verify signature on the full request object (sorted keys)
     if config.verify_signature and not verify_signature(
         reg.hotkey, reg_json, x_signature
     ):
         raise HTTPException(status_code=400, detail="Invalid signature")
-    # 4. Check hotkey is registered
+    # 5. Check hotkey is registered
     if not is_hotkey_registered(reg.hotkey, substrate, config.netuid):
         raise HTTPException(
             status_code=400,
@@ -231,3 +254,38 @@ if ENV == "test":
         validator: Annotated[Validator, Depends(get_validator)]
     ):
         return await validator.compute_ratings()
+
+
+
+@app.post("/unbind")
+async def unbind_worker(
+    req: UnbindWorkerRequest,
+    db_service: Annotated[DatabaseService, Depends(get_database_service)],
+    config: Annotated[ValidatorSettings, Depends(load_config)],
+    substrate: Annotated[SubstrateInterface, Depends(get_substrate)],
+    x_signature: Annotated[str, Header(alias="X-Signature")],
+):
+    # Log request
+    logger.debug(f"/unbind request: payload={req.model_dump()}")
+    req_dict = req.model_dump()
+    req_json = json.dumps(req_dict, sort_keys=True, separators=(",", ":"))
+    logger.debug(f"/unbind req_json: {req_json}")
+    logger.debug(f"/unbind X-Signature: {x_signature}")
+    # Verify signature on the full request object (sorted keys)
+    if config.verify_signature and not verify_signature(
+        req.hotkey, req_json, x_signature
+    ):
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    # Check hotkey is registered
+    if not is_hotkey_registered(req.hotkey, substrate, config.netuid):
+        raise HTTPException(
+            status_code=400,
+            detail="Hotkey not registered. To register in subnet use btcli command: `btcli subnet register`",
+        )
+    try:
+        await db_service.mark_worker_unbound(
+            req.hotkey, req.worker, req.unbind_signature
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return dict(message="Worker unbound successfully")
