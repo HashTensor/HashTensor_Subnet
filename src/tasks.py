@@ -76,7 +76,7 @@ async def sync_hotkey_workers_task(
         if getattr(node, "ip", None) != "0.0.0.0"
         and get_stake_weights(node) >= MIN_WEIGHTED_STAKE
     ]
-    validator_endpoints = [(node.ip, node.port) for node in real_nodes]
+    validator_endpoints = [(node.ip, node.port, node.hotkey) for node in real_nodes]
     logger.info(
         f"[sync_hotkey_workers_task] Found {len(validator_endpoints)} endpoints to check."
     )
@@ -85,12 +85,12 @@ async def sync_hotkey_workers_task(
     is_valid_list = await asyncio.gather(
         *[
             is_hashtensor_validator(ip, port)
-            for ip, port in validator_endpoints
+            for ip, port, _ in validator_endpoints
         ]
     )
     filtered_endpoints = [
-        ep
-        for ep, is_valid in zip(validator_endpoints, is_valid_list)
+        (ip, port, hotkey)
+        for (ip, port, hotkey), is_valid in zip(validator_endpoints, is_valid_list)
         if is_valid
     ]
     logger.info(
@@ -101,61 +101,91 @@ async def sync_hotkey_workers_task(
         logger.warning("[sync_hotkey_workers_task] No valid endpoints found.")
         return
 
+    # Sync each validator
+    total_added = 0
+    total_skipped = 0
+    total_failed = 0
+    
     async with aiohttp.ClientSession() as session:
-        results = await asyncio.gather(
-            *[
-                fetch_hotkey_workers_from_validator(session, ip, port)
-                for ip, port in filtered_endpoints
-            ]
-        )
-        all_workers = [worker for sublist in results for worker in sublist]
+        for ip, port, hotkey in filtered_endpoints:
+            logger.info(f"[sync_hotkey_workers_task] Syncing validator {hotkey} at {ip}:{port}")
+            
+            # Get the last registration time synced for this validator
+            last_registration_time = await db_service.get_validator_sync_offset(hotkey)
+            latest_registration_time = last_registration_time
+            
+            logger.debug(f"[sync_hotkey_workers_task] Fetching workers from {hotkey} since {last_registration_time}")
+            
+            workers = await fetch_hotkey_workers_from_validator(
+                session, ip, port, last_registration_time
+            )
+            
+            if not workers:
+                logger.debug(f"[sync_hotkey_workers_task] No new workers from {hotkey}")
+                continue
+            
+            logger.info(f"[sync_hotkey_workers_task] Fetched {len(workers)} workers from {hotkey}")
+            
+            # Process workers
+            page_added = 0
+            page_skipped = 0
+            page_failed = 0
+            
+            for worker_obj in workers:
+                worker = worker_obj["worker"]
+                worker_hotkey = worker_obj["hotkey"]
+                registration_time = worker_obj["registration_time"]
+                signature = worker_obj["signature"]
+                
+                # Update the latest registration time seen
+                if registration_time > latest_registration_time:
+                    latest_registration_time = registration_time
+
+                exists = db_service.session.query(
+                    db_service.session.query(HotkeyWorker)
+                    .filter_by(worker=worker)
+                    .exists()
+                ).scalar()
+                if exists:
+                    page_skipped += 1
+                    continue
+                    
+                reg_dict = {
+                    "hotkey": worker_hotkey,
+                    "worker": worker,
+                    "registration_time": registration_time,
+                }
+                reg_json = json.dumps(reg_dict, sort_keys=True, separators=(",", ":"))
+                if not verify_signature(worker_hotkey, reg_json, signature):
+                    logger.warning(
+                        f"Signature verification failed for worker {worker}"
+                    )
+                    page_failed += 1
+                    continue
+                    
+                try:
+                    await db_service.add_mapping(
+                        worker_hotkey, worker, signature, registration_time
+                    )
+                    logger.info(f"Added worker {worker} from remote validator API")
+                    page_added += 1
+                except Exception as e:
+                    logger.error(f"Failed to add worker {worker}: {e}")
+                    page_failed += 1
+            
+            total_added += page_added
+            total_skipped += page_skipped
+            total_failed += page_failed
+            
+            # Update the last registration time for this validator
+            if latest_registration_time > last_registration_time:
+                await db_service.update_validator_sync_offset(hotkey, latest_registration_time)
+                logger.info(f"[sync_hotkey_workers_task] Updated sync offset for {hotkey} to {latest_registration_time}")
+            
+            logger.info(f"[sync_hotkey_workers_task] {hotkey}: Added: {page_added}, Skipped: {page_skipped}, Failed: {page_failed}")
+    
     logger.info(
-        f"[sync_hotkey_workers_task] Fetched {len(all_workers)} workers from all validators."
+        f"[sync_hotkey_workers_task] Done. Total Added: {total_added}, Total Skipped: {total_skipped}, Total Failed: {total_failed}"
     )
 
-    # Sort workers by registration_time ascending
-    all_workers.sort(key=lambda w: w["registration_time"])
-
-    added = 0
-    skipped = 0
-    failed = 0
-    for worker_obj in all_workers:
-        worker = worker_obj["worker"]
-        hotkey = worker_obj["hotkey"]
-        registration_time = worker_obj["registration_time"]
-        signature = worker_obj["signature"]
-
-        exists = db_service.session.query(
-            db_service.session.query(HotkeyWorker)
-            .filter_by(worker=worker)
-            .exists()
-        ).scalar()
-        if exists:
-            skipped += 1
-            continue
-        reg_dict = {
-            "hotkey": hotkey,
-            "worker": worker,
-            "registration_time": registration_time,
-        }
-        reg_json = json.dumps(reg_dict, sort_keys=True, separators=(",", ":"))
-        if not verify_signature(hotkey, reg_json, signature):
-            logger.warning(
-                f"Signature verification failed for worker {worker}"
-            )
-            failed += 1
-            continue
-        try:
-            await db_service.add_mapping(
-                hotkey, worker, signature, registration_time
-            )
-            logger.info(f"Added worker {worker} from remote validator API")
-            added += 1
-        except Exception as e:
-            logger.error(f"Failed to add worker {worker}: {e}")
-            failed += 1
-    logger.info(
-        f"[sync_hotkey_workers_task] Done. Added: {added}, Skipped: {skipped}, Failed: {failed}"
-    )
-
-# TODO: Add task to clean up workers that are unbound
+# TODO: Add task to clean up workers that are unbound (optional cleanup task)

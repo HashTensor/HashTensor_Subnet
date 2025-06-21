@@ -284,7 +284,7 @@ async def unbind_worker(
         )
     try:
         await db_service.mark_worker_unbound(
-            req.hotkey, req.worker, req.unbind_signature
+            req.hotkey, req.worker, x_signature
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

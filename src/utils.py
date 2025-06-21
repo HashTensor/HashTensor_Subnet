@@ -88,10 +88,13 @@ async def is_hashtensor_validator(ip, port):
         return False
 
 
-async def fetch_hotkey_workers_from_validator(session, ip, port):
+async def fetch_hotkey_workers_from_validator(session, ip, port, since_timestamp=0.0):
     url = f"http://{ip}:{port}/hotkey_workers"
+    params = {
+        "since_timestamp": since_timestamp
+    }
     try:
-        async with session.get(url, timeout=10) as resp:
+        async with session.get(url, params=params, timeout=10) as resp:
             if resp.status != 200:
                 return []
             return await resp.json()

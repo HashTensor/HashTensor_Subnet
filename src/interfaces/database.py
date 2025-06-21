@@ -19,6 +19,7 @@ from sqlalchemy.orm import (
 )
 from ..mapping import MappingSource
 from typing import Optional
+import time
 
 DATABASE_URL = f"sqlite:///data/mapping.db"
 
@@ -35,6 +36,13 @@ class HotkeyWorker(Base):
     )
     signature: Mapped[str] = mapped_column(String, nullable=False)
     unbind_signature: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class ValidatorSyncOffset(Base):
+    __tablename__ = "validator_sync_offset"
+    hotkey: Mapped[str] = mapped_column(String, primary_key=True)
+    last_registration_time: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    last_sync_time: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
 
 
 class SqliteMappingSource(MappingSource):
@@ -149,6 +157,28 @@ class DatabaseService:
         obj.unbind_signature = unbind_signature
         self.session.commit()
         return None
+
+    async def get_validator_sync_offset(self, hotkey: str) -> float:
+        """Get the last registration time synced for a validator hotkey"""
+        row = self.session.query(ValidatorSyncOffset).filter_by(hotkey=hotkey).first()
+        if row:
+            return row.last_registration_time
+        return 0.0
+
+    async def update_validator_sync_offset(self, hotkey: str, registration_time: float) -> None:
+        """Update the last registration time synced for a validator hotkey"""
+        row = self.session.query(ValidatorSyncOffset).filter_by(hotkey=hotkey).first()
+        if row:
+            row.last_registration_time = registration_time
+            row.last_sync_time = time.time()
+        else:
+            row = ValidatorSyncOffset(
+                hotkey=hotkey,
+                last_registration_time=registration_time,
+                last_sync_time=time.time()
+            )
+            self.session.add(row)
+        self.session.commit()
 
 
 class DynamicConfig(Base):
