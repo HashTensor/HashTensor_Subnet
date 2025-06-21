@@ -244,12 +244,18 @@ async def main():
         help="Subtensor network",
         default=FINNEY_NETWORK,
     )
+    parser.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Skip confirmation prompt and proceed with unbinding",
+    )
     args = parser.parse_args()
     
     wallet_name = getattr(args, "wallet.name", "default")
     wallet_hotkey = getattr(args, "wallet.hotkey", "default")
     wallet_path = getattr(args, "wallet.path", "~/.bittensor/wallets/")
     subtensor_network = getattr(args, "subtensor.network", FINNEY_NETWORK)
+    confirm = getattr(args, "confirm", False)
     
     wallet = Wallet(config=Config(wallet_name, wallet_hotkey, wallet_path))
     hotkey_address = wallet.get_hotkey().ss58_address
@@ -292,11 +298,29 @@ async def main():
     print(f"\nTotal unique workers to unbind: {len(all_workers)}")
     print(f"Workers: {list(all_workers)}")
     
-    # Confirm with user
-    response = input(f"\nDo you want to unbind all {len(all_workers)} workers? (yes/no): ")
-    if response.lower() != 'yes':
-        print("Unbind cancelled")
-        return
+    # Handle confirmation
+    if confirm:
+        print("\nProceeding with unbinding (--confirm flag used)")
+    else:
+        try:
+            response = input(f"\nDo you want to unbind all {len(all_workers)} workers? (yes/no): ")
+            if response.lower() != 'yes':
+                print("Unbind cancelled")
+                return
+        except (EOFError, KeyboardInterrupt):
+            # Try to use /dev/tty for interactive input when stdin is redirected
+            try:
+                import sys
+                with open('/dev/tty', 'r') as tty:
+                    print(f"\nDo you want to unbind all {len(all_workers)} workers? (yes/no): ", end='', flush=True)
+                    response = tty.readline().strip()
+                    if response.lower() != 'yes':
+                        print("Unbind cancelled")
+                        return
+            except (FileNotFoundError, PermissionError, OSError):
+                print("\n\nError: Cannot read input interactively. Use --confirm flag to skip confirmation prompt.")
+                print("Example: curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/unbind_all.py | python3 - --wallet.name my_wallet --wallet.hotkey my_hotkey --subtensor.network finney --confirm")
+                return
     
     # Unbind all workers
     print(f"\nUnbinding {len(all_workers)} workers...")

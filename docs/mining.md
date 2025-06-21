@@ -199,6 +199,42 @@ curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scri
 - **You must confirm with "yes"** to proceed with the unbinding
 - This action cannot be undone - workers will need to be re-registered if you want to use them again
 
+**Making it Interactive with curl:**
+
+The script now tries to handle interactive input even when piped via curl. If the standard approach doesn't work, try these alternatives:
+
+**Option 1: Use /dev/tty (Recommended)**
+```bash
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/unbind_all.py | python3 - \
+  --wallet.name my_wallet \
+  --wallet.hotkey my_hotkey \
+  --subtensor.network finney
+```
+The script will automatically try to use `/dev/tty` for interactive input if stdin is redirected.
+
+**Option 2: Download and Run Locally**
+```bash
+# Download the script
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/unbind_all.py > unbind_all.py
+
+# Run it directly
+python3 unbind_all.py \
+  --wallet.name my_wallet \
+  --wallet.hotkey my_hotkey \
+  --subtensor.network finney
+```
+
+**For Automated/Non-Interactive Use:**
+If you're using the script in a non-interactive environment (like when piping via curl), add the `--confirm` flag to skip the confirmation prompt:
+
+```bash
+curl -s https://raw.githubusercontent.com/HashTensor/HashTensor_Subnet/main/scripts/unbind_all.py | python3 - \
+  --wallet.name my_wallet \
+  --wallet.hotkey my_hotkey \
+  --subtensor.network finney \
+  --confirm
+```
+
 **Example Output:**
 ```
 Wallet hotkey: 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty
