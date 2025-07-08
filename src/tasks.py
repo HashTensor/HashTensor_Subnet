@@ -130,12 +130,17 @@ async def sync_hotkey_workers_task(
             page_added = 0
             page_skipped = 0
             page_failed = 0
+            max_registration_time = latest_registration_time
             
             for worker_obj in workers:
                 worker = worker_obj["worker"]
                 worker_hotkey = worker_obj["hotkey"]
                 registration_time = worker_obj["registration_time"]
                 signature = worker_obj["signature"]
+                
+                # Track the max registration_time seen in this batch
+                if registration_time > max_registration_time:
+                    max_registration_time = registration_time
                 
                 # Security check: worker name must contain the hotkey
                 if worker_hotkey not in worker:
@@ -186,7 +191,12 @@ async def sync_hotkey_workers_task(
             total_failed += page_failed
             
             # Update the last registration time for this validator
-            if latest_registration_time > last_registration_time:
+            # If no workers were added but there were workers, update offset to max_registration_time
+            if page_added == 0 and workers:
+                if max_registration_time > last_registration_time:
+                    await db_service.update_validator_sync_offset(hotkey, max_registration_time)
+                    logger.info(f"[sync_hotkey_workers_task] Updated sync offset for {hotkey} to {max_registration_time} (all workers errored)")
+            elif latest_registration_time > last_registration_time:
                 await db_service.update_validator_sync_offset(hotkey, latest_registration_time)
                 logger.info(f"[sync_hotkey_workers_task] Updated sync offset for {hotkey} to {latest_registration_time}")
             
