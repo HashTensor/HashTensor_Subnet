@@ -106,7 +106,7 @@ async def lifespan(app: FastAPI):
             except Exception as e:
                 logger.exception(f"Error in sync_hotkey_workers_task: {e}")
             await asyncio.sleep(
-                timedelta(minutes=config.sync_hotkey_workers_interval).total_seconds()
+                config.sync_hotkey_workers_interval.total_seconds()
             )
 
     # Create tasks conditionally based on feature flags
