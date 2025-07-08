@@ -289,3 +289,15 @@ async def unbind_worker(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return dict(message="Worker unbound successfully")
+
+
+@app.get("/validator_sync_offsets")
+async def get_validator_sync_offsets(
+    db_service: Annotated[DatabaseService, Depends(get_database_service)],
+    page_size: int = 100,
+    page_number: int = 1,
+):
+    return await db_service.get_all_validator_sync_offsets(
+        page_size=page_size,
+        page_number=page_number,
+    )

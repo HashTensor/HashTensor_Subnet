@@ -180,6 +180,19 @@ class DatabaseService:
             self.session.add(row)
         self.session.commit()
 
+    async def get_all_validator_sync_offsets(self, page_size: int = 100, page_number: int = 1) -> list[dict]:
+        """Return all records from validator_sync_offset table as list of dicts, paginated."""
+        query = self.session.query(ValidatorSyncOffset).order_by(ValidatorSyncOffset.hotkey)
+        results = query.offset((page_number - 1) * page_size).limit(page_size).all()
+        return [
+            {
+                "hotkey": row.hotkey,
+                "last_registration_time": row.last_registration_time,
+                "last_sync_time": row.last_sync_time,
+            }
+            for row in results
+        ]
+
 
 class DynamicConfig(Base):
     __tablename__ = "dynamic_config"
