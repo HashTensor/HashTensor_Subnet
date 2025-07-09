@@ -26,6 +26,7 @@ class MinerMetrics(BaseModel):
     - difficulty: Average difficulty per valid share in the window (total_difficulty / valid_shares).
     - hashrate: Estimated hashrate in H/s, calculated as (valid_shares * avg_difficulty * 2^32) / window_seconds.
     - worker_name: Name of the worker.
+    - uptime_seconds: Total work seconds in the window (from ks_miner_work_seconds_total).
     """
 
     uptime: float = 0.0
@@ -35,6 +36,7 @@ class MinerMetrics(BaseModel):
     difficulty: float = 0.0  # Average difficulty per share
     hashrate: float = 0.0
     worker_name: str | None = None
+    uptime_seconds: float = 0.0
 
     model_config = ConfigDict(frozen=True)
 
@@ -114,6 +116,14 @@ class MetricsClient:
         query = f"ks_miner_uptime_seconds[{resolution}]"
         return await self._fetch_metric(session, query, float)
 
+    async def _get_uptime_seconds(
+        self, session: aiohttp.ClientSession
+    ) -> Dict[MinerKey, float]:
+        """Query Prometheus for sum(increase(ks_miner_work_seconds_total[window])) by (worker, wallet)."""
+        resolution = f"{int(self.window.total_seconds())}s"
+        query = f"sum(increase(ks_miner_work_seconds_total[{resolution}])) by (worker, wallet)"
+        return await self._fetch_metric(session, query, float)
+
     async def fetch_metrics(self) -> Dict[MinerKey, MinerMetrics]:
         """
         Fetch and parse metrics from Prometheus endpoint for all wallets.
@@ -128,11 +138,13 @@ class MetricsClient:
                 invalid_shares_map,
                 total_diff_map,
                 uptime_map,
+                uptime_seconds_map,
             ) = await asyncio.gather(
                 self._get_valid_shares(session),
                 self._get_invalid_shares(session),
                 self._get_total_share_diff(session),
                 self._get_uptime(session),
+                self._get_uptime_seconds(session),
             )
             result = {}
             window_seconds = int(self.window.total_seconds())
@@ -162,6 +174,7 @@ class MetricsClient:
                     difficulty=avg_difficulty,  # Store average difficulty per share
                     hashrate=hashrate,
                     worker_name=miner_key.worker,
+                    uptime_seconds=uptime_seconds_map.get(miner_key, 0.0),
                 )
                 result[miner_key] = miner_metrics
             return result

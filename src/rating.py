@@ -39,22 +39,11 @@ class RatingCalculator:
             for m in metrics
         )
 
-    def compute_fractional_uptime(self, start_timestamp: float) -> float:
-        """Convert the worker's unix start timestamp to a fractional uptime for the window."""
-        now = time.time()
-        window_start = now - self.window_seconds
-
-        # If the start timestamp is in the future, consider the worker as not started in this window
-        if start_timestamp > now:
-            return 0.0
-
-        # If the start is before the window, the worker was online for the entire window
-        if start_timestamp < window_start:
-            return 1.0
-
-        # Otherwise, the worker started within the window, so was online from start to now:
-        uptime_seconds = now - start_timestamp  # always < window_seconds
-        return uptime_seconds / self.window_seconds
+    def compute_fractional_uptime(self, uptime_seconds: float) -> float:
+        """Convert the worker's uptime_seconds to a fractional uptime for the window."""
+        # Clamp to [0, window_seconds]
+        uptime = max(0.0, min(uptime_seconds, self.window_seconds))
+        return uptime / self.window_seconds
 
     def compute_avg_uptime(self, metrics: List[MinerMetrics]) -> float:
         """
@@ -63,8 +52,8 @@ class RatingCalculator:
         """
         if not metrics:
             return 0.0
-        # Convert each unix timestamp to a fraction
-        uptimes = [self.compute_fractional_uptime(m.uptime) for m in metrics]
+        # Use uptime_seconds instead of uptime
+        uptimes = [self.compute_fractional_uptime(m.uptime_seconds) for m in metrics]
         # Clamp fractions to [0.0, 1.0] just in case
         uptimes = [max(0.0, min(1.0, u)) for u in uptimes]
         return sum(uptimes) / len(uptimes)

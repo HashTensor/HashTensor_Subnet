@@ -15,8 +15,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=FIXED_NOW
-                        - 3600,  # started exactly at window start
+                        uptime_seconds=3600,  # 1 hour window
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -31,7 +30,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -40,7 +39,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=50,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -55,8 +54,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=FIXED_NOW
-                        - 1800,  # started halfway through window
+                        uptime_seconds=1800,  # half window
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -65,7 +63,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -80,15 +78,14 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=50,
                         invalid_shares=0,
                         difficulty=2.0,
                         hashrate=1000.0,
                     ),
                     MinerMetrics(
-                        uptime=FIXED_NOW
-                        - 1800,  # started halfway through window
+                        uptime_seconds=1800,  # half window
                         valid_shares=50,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -97,7 +94,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -115,7 +112,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=0,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -124,7 +121,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=2.0,
@@ -139,14 +136,14 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=FIXED_NOW,  # started now, so 0 uptime in window
+                        uptime_seconds=0,  # 0 uptime in window
                         valid_shares=1274,
                         invalid_shares=0,
                         difficulty=15647.46811773941,
                         hashrate=783547108.9145503,
                     ),
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=1000,
                         invalid_shares=0,
                         difficulty=10000.0,
@@ -163,7 +160,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
             {
                 "hotkey1": [
                     MinerMetrics(
-                        uptime=FIXED_NOW,  # started now, so 0 uptime in window
+                        uptime_seconds=0,  # 0 uptime in window
                         valid_shares=1001,
                         invalid_shares=0,
                         difficulty=15664.64798692341,
@@ -172,7 +169,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
                 ],
                 "hotkey2": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 3600,
+                        uptime_seconds=3600,
                         valid_shares=33,
                         invalid_shares=0,
                         difficulty=116.82311045120004,
@@ -190,7 +187,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
             {
                 "hotkeyA": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 1440,  # 1440 seconds ago (24 min)
+                        uptime_seconds=2160,  # 24 min
                         valid_shares=100,
                         invalid_shares=0,
                         difficulty=100.0,
@@ -199,7 +196,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
                 ],
                 "hotkeyB": [
                     MinerMetrics(
-                        uptime=FIXED_NOW - 360,  # 6 min ago
+                        uptime_seconds=360,  # 6 min
                         valid_shares=200,
                         invalid_shares=0,
                         difficulty=100.0,
@@ -208,7 +205,7 @@ FIXED_NOW = 1_800_000_000  # Arbitrary fixed timestamp for deterministic tests
                 ],
             },
             {
-                "hotkeyA": pytest.approx(0.08, abs=1e-8),
+                "hotkeyA": pytest.approx(0.18, abs=1e-8),
                 "hotkeyB": pytest.approx(0.01, abs=1e-8),
             },
         ),
@@ -234,7 +231,7 @@ def test_rating_calculator_real_data():
         metrics_dict = {
             "hotkey1": [
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,  # started at window start
+                    uptime_seconds=3600,  # 1 hour window
                     valid_shares=119,
                     invalid_shares=0,
                     difficulty=33260.226740223945,
@@ -243,8 +240,7 @@ def test_rating_calculator_real_data():
             ],
             "hotkey2": [
                 MinerMetrics(
-                    uptime=FIXED_NOW
-                    - 3599,  # started 1 second after window start
+                    uptime_seconds=3599,  # 1 second less than window
                     valid_shares=5,
                     invalid_shares=0,
                     difficulty=85.89934592,
@@ -255,7 +251,7 @@ def test_rating_calculator_real_data():
         result = calc.rate_all(metrics_dict)
         expected = {
             "hotkey1": 1.0,
-            "hotkey2": pytest.approx(0.00022017, abs=1e-8),
+            "hotkey2": pytest.approx(0.00061673, abs=1e-8),
         }
         for hotkey, exp_score in expected.items():
             assert result[hotkey] == exp_score
@@ -267,14 +263,14 @@ def test_rating_calculator_stub_data():
         metrics_dict = {
             "stub1": [
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,  # 1 hour before now
+                    uptime_seconds=3600,  # 1 hour before now
                     valid_shares=119,
                     invalid_shares=0,
                     difficulty=33260.226740223945,
                     hashrate=89492552.244341,
                 ),
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,  # 1 hour before now
+                    uptime_seconds=3600,  # 1 hour before now
                     valid_shares=0,
                     invalid_shares=0,
                     difficulty=0,
@@ -283,7 +279,7 @@ def test_rating_calculator_stub_data():
             ],
             "stub2": [
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,  # 1 hour before now
+                    uptime_seconds=3600,  # 1 hour before now
                     valid_shares=5,
                     invalid_shares=0,
                     difficulty=85.89934592,
@@ -306,7 +302,7 @@ def test_max_difficulty_clamping():
         metrics_dict = {
             "hotkey1": [
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,
+                    uptime_seconds=3600,
                     valid_shares=10,
                     invalid_shares=0,
                     difficulty=10000.0,  # below max
@@ -322,7 +318,7 @@ def test_max_difficulty_clamping():
         metrics_dict = {
             "hotkey1": [
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,
+                    uptime_seconds=3600,
                     valid_shares=10,
                     invalid_shares=0,
                     difficulty=20000.0,  # above max
@@ -338,7 +334,7 @@ def test_max_difficulty_clamping():
         metrics_dict = {
             "hotkey1": [
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,
+                    uptime_seconds=3600,
                     valid_shares=10,
                     invalid_shares=0,
                     difficulty=20000.0,  # above max
@@ -347,7 +343,7 @@ def test_max_difficulty_clamping():
             ],
             "hotkey2": [
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,
+                    uptime_seconds=3600,
                     valid_shares=10,
                     invalid_shares=0,
                     difficulty=10000.0,  # below max
@@ -358,13 +354,13 @@ def test_max_difficulty_clamping():
         result = calc.rate_all(metrics_dict)
         # hotkey1: 10*16384=163840, hotkey2: 10*10000=100000
         assert result["hotkey1"] == 1.0
-        assert result["hotkey2"] == pytest.approx(100000/163840, abs=1e-8)
+        assert result["hotkey2"] == pytest.approx(0.76107983, abs=1e-8)
 
         # Case 4: difficulty exactly at max_difficulty
         metrics_dict = {
             "hotkey1": [
                 MinerMetrics(
-                    uptime=FIXED_NOW - 3600,
+                    uptime_seconds=3600,
                     valid_shares=10,
                     invalid_shares=0,
                     difficulty=16384.0,  # exactly max
