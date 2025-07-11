@@ -137,6 +137,7 @@ async def sync_hotkey_workers_task(
                 worker_hotkey = worker_obj["hotkey"]
                 registration_time = worker_obj["registration_time"]
                 signature = worker_obj["signature"]
+                wallet = worker_obj["wallet"]
                 
                 # Track the max registration_time seen in this batch
                 if registration_time > max_registration_time:
@@ -165,9 +166,9 @@ async def sync_hotkey_workers_task(
                     
                 reg_dict = {
                     "hotkey": worker_hotkey,
-                    "worker": worker,
+                    "worker": f"{wallet}.{worker}",  # To restore original worker name
                     "registration_time": registration_time,
-                }
+                } # TODO: Maybe we have to check for pool owner wallet for backwards signature compatibility
                 reg_json = json.dumps(reg_dict, sort_keys=True, separators=(",", ":"))
                 if not verify_signature(worker_hotkey, reg_json, signature):
                     logger.warning(
@@ -178,7 +179,7 @@ async def sync_hotkey_workers_task(
                     
                 try:
                     await db_service.add_mapping(
-                        worker_hotkey, worker, signature, registration_time
+                        worker_hotkey, worker, signature, registration_time, wallet
                     )
                     logger.info(f"Added worker {worker} from remote validator API")
                     page_added += 1

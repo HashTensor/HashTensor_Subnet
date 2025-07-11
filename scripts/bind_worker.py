@@ -226,12 +226,28 @@ async def main():
         default=FINNEY_NETWORK,
     )
     args = parser.parse_args()
-    worker = getattr(args, "worker", None)
+    worker: str = getattr(args, "worker", None)
     wallet_name = getattr(args, "wallet.name", "default")
     wallet_hotkey = getattr(args, "wallet.hotkey", "default")
     wallet_path = getattr(args, "wallet.path", "~/.bittensor/wallets/")
     subtensor_network = getattr(args, "subtensor.network", FINNEY_NETWORK)
+
+    # Split worker by first dot only
+    if worker is None or "." not in worker:
+        print("Worker must be in the format <wallet>.<workername>")
+        return
+    wallet_part, rest = worker.split(".", 1)
+    # Validate kaspa wallet format (simple check)
+    if not wallet_part.startswith("kaspa:") or len(wallet_part) < 10:
+        print(f"Invalid kaspa wallet: {wallet_part}")
+        return
+    # Load wallet and check hotkey
     wallet = Wallet(config=Config(wallet_name, wallet_hotkey, wallet_path))
+    hotkey_ss58 = wallet.get_hotkey().ss58_address
+    # Ensure worker name contains hotkey ss58 address
+    if hotkey_ss58 not in rest:
+        print(f"Worker name must contain the hotkey ss58 address: {hotkey_ss58}")
+        return
     async with get_substrate(subtensor_network) as substrate:
         netuid = NETWORK_TO_NETUID[subtensor_network]
         nodes = await get_validators(substrate, netuid)

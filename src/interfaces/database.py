@@ -30,6 +30,7 @@ class HotkeyWorker(Base):
     __tablename__ = "hotkey_worker"
     worker: Mapped[str] = mapped_column(String, primary_key=True)
     hotkey: Mapped[str] = mapped_column(String, nullable=False)
+    wallet: Mapped[str] = mapped_column(String, nullable=False)
     registration_time: Mapped[float] = mapped_column(Float, nullable=False)
     registration_time_int: Mapped[int] = mapped_column(
         BigInteger, nullable=False
@@ -60,7 +61,7 @@ class SqliteMappingSource(MappingSource):
         # This is a synchronous DB call, but the method is async for interface compatibility
         result = {}
         for row in self.session.query(HotkeyWorker).filter(HotkeyWorker.unbind_signature.is_(None)).all():
-            result[row.worker] = row.hotkey
+            result[f"{row.wallet}.{row.worker}"] = row.hotkey
         return result
 
 
@@ -81,6 +82,7 @@ class DatabaseService:
         worker: str,
         signature: str,
         registration_time: float | int,
+        wallet: str,
     ) -> None:
         # Only add mapping to database
         existing = (
@@ -106,6 +108,7 @@ class DatabaseService:
         new_mapping = HotkeyWorker(
             worker=worker,
             hotkey=hotkey,
+            wallet=wallet,
             signature=signature,
             registration_time=reg_time_float,
             registration_time_int=reg_time_int,
@@ -135,6 +138,7 @@ class DatabaseService:
             {
                 "worker": row.worker,
                 "hotkey": row.hotkey,
+                "wallet": row.wallet,
                 "registration_time": row.registration_time,  # API compatibility
                 "registration_time_int": row.registration_time_int,  # For reference
                 "signature": row.signature,
@@ -147,9 +151,10 @@ class DatabaseService:
         hotkey: str,
         worker: str,
         unbind_signature: str,
+        wallet: str,
     ) -> None:
         # Mark the worker as unbound by setting unbind_signature
-        obj = self.session.query(HotkeyWorker).filter_by(hotkey=hotkey, worker=worker).first()
+        obj = self.session.query(HotkeyWorker).filter_by(hotkey=hotkey, worker=worker, wallet=wallet).first()
         if not obj:
             raise ValueError("Worker not found for this hotkey")
         if obj.unbind_signature:

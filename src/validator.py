@@ -36,8 +36,9 @@ class Validator:
         mapping = await self.mapping_manager.get_mapping()
         hotkey_metrics: Dict[str, List[MinerMetrics]] = defaultdict(list)
         for worker, hotkey in mapping.items():
+            wallet, worker_name = worker.split(".", 1)
             key = MinerKey(
-                wallet=self.config.kaspa_pool_owner_wallet, worker=worker
+                wallet=wallet, worker=worker_name
             )
             hotkey_metrics[hotkey].append(
                 metrics.get(key, MinerMetrics.default_instance(worker))

@@ -173,27 +173,25 @@ async def register_hotkey_worker(
             status_code=400,
             detail="Registration time is too far from current UTC time.",
         )
-    # 2. Security check: worker name must contain the hotkey
-    if reg.hotkey not in reg.worker:
+    # Extract wallet and worker name by splitting by first dot
+    if "." not in reg.worker:
+        raise HTTPException(status_code=400, detail="Worker must be in the format <wallet>.<workername>")
+    wallet_part, worker_name = reg.worker.split(".", 1)
+    # Validate kaspa wallet format
+    if not wallet_part.startswith("kaspa:") or len(wallet_part) < 10:
+        raise HTTPException(status_code=400, detail=f"Invalid kaspa wallet: {wallet_part}")
+    # Security check: worker name must contain the hotkey
+    if reg.hotkey not in worker_name:
         raise HTTPException(
             status_code=400,
             detail="Worker name must contain the hotkey for security validation.",
         )
-    # 3. Check worker exists
-    if not await worker_provider.is_worker_exists(
-        config.kaspa_pool_owner_wallet, reg.worker
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Worker not found. Make sure you are using the correct wallet address\n"
-            + f"Kaspa Pool Owner Wallet: {config.kaspa_pool_owner_wallet}",
-        )
-    # 4. Verify signature on the full request object (sorted keys)
+    # 3. Verify signature on the full request object (sorted keys)
     if config.verify_signature and not verify_signature(
         reg.hotkey, reg_json, x_signature
     ):
         raise HTTPException(status_code=400, detail="Invalid signature")
-    # 5. Check hotkey is registered
+    # 4. Check hotkey is registered
     if not is_hotkey_registered(reg.hotkey, substrate, config.netuid):
         raise HTTPException(
             status_code=400,
@@ -202,7 +200,7 @@ async def register_hotkey_worker(
     try:
         # Store registration_time as float seconds, db will convert to int microseconds
         await db_service.add_mapping(
-            reg.hotkey, reg.worker, x_signature, reg.registration_time
+            reg.hotkey, reg.worker, x_signature, reg.registration_time, wallet=wallet_part
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -271,6 +269,13 @@ async def unbind_worker(
     req_json = json.dumps(req_dict, sort_keys=True, separators=(",", ":"))
     logger.debug(f"/unbind req_json: {req_json}")
     logger.debug(f"/unbind X-Signature: {x_signature}")
+    # Extract wallet and worker name by splitting by first dot
+    if "." not in req.worker:
+        raise HTTPException(status_code=400, detail="Worker must be in the format <wallet>.<workername>")
+    wallet_part, worker_name = req.worker.split(".", 1)
+    # Validate kaspa wallet format
+    if not wallet_part.startswith("kaspa:") or len(wallet_part) < 10:
+        raise HTTPException(status_code=400, detail=f"Invalid kaspa wallet: {wallet_part}")
     # Verify signature on the full request object (sorted keys)
     if config.verify_signature and not verify_signature(
         req.hotkey, req_json, x_signature
@@ -284,7 +289,7 @@ async def unbind_worker(
         )
     try:
         await db_service.mark_worker_unbound(
-            req.hotkey, req.worker, x_signature
+            req.hotkey, worker_name, x_signature, wallet=wallet_part
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

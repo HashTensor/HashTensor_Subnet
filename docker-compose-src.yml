@@ -1,0 +1,28 @@
+services:
+  hashtensor-validator:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - PORT=${PORT:-8000}
+      - DATABASE_URL=sqlite:///data/mapping.db
+      - PROMETHEUS_ENDPOINT=http://pool.hashtensor.com:9090
+      - WALLET_NAME=${WALLET_NAME:-default}
+      - WALLET_HOTKEY=${WALLET_HOTKEY:-default}
+      - WALLET_PATH=${WALLET_PATH:-~/.bittensor/wallets/}
+      - SUBTENSOR_NETWORK=${SUBTENSOR_NETWORK:-finney}
+    volumes:
+      - ~/.bittensor:/root/.bittensor
+      - ./data:/app/data
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
+    entrypoint: ["/bin/bash", "/app/entrypoint.sh"]
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_LABEL_ENABLE=true
+    command: --interval 30
