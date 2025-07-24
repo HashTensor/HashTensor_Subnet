@@ -1,6 +1,6 @@
 [project]
 name = "hashtensor-validator"
-version = "1.4.1"
+version = "1.4.2"
 description = "Bittensor Kaspa Validator"
 dependencies = [
     "pydantic-settings",

@@ -36,22 +36,17 @@ class RatingCalculator:
         and apply a per-worker penalty if difficulty exceeds max_difficulty.
         Also applies an exponential penalty if valid_shares exceeds allowed shares per window.
         """
-        total_valid_shares = sum(m.valid_shares for m in metrics)
         window_minutes = self.window_seconds / 60.0
         allowed_shares = window_minutes * self.shares_per_minute
-        # Exponential penalty if valid_shares exceeds allowed_shares
-        if total_valid_shares > allowed_shares:
-            # Penalty: exp(-excess/allowed), so large excess nearly zeroes the result
-            excess = total_valid_shares - allowed_shares
-            share_penalty = math.exp(-excess / allowed_shares)
-        else:
-            share_penalty = 1.0
-        # Per-worker penalty for difficulty
-        work = sum(
-            m.valid_shares * min(m.difficulty, self.max_difficulty) * self.penalty_exponential(m.difficulty)
-            for m in metrics
-        )
-        return work * share_penalty
+        work = 0.0
+        for m in metrics:
+            if m.valid_shares > allowed_shares:
+                excess = m.valid_shares - allowed_shares
+                share_penalty = math.exp(-excess / allowed_shares)
+            else:
+                share_penalty = 1.0
+            work += m.valid_shares * min(m.difficulty, self.max_difficulty) * self.penalty_exponential(m.difficulty) * share_penalty
+        return work
 
     def compute_fractional_uptime(self, uptime_seconds: float) -> float:
         """Convert the worker's uptime_seconds to a fractional uptime for the window."""
