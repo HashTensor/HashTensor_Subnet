@@ -11,7 +11,6 @@ from fiber.utils import get_logger
 
 logger = get_logger(__name__)
 
-import time
 
 
 class RatingCalculator:
@@ -21,6 +20,7 @@ class RatingCalculator:
         window: timedelta = timedelta(hours=1),
         ndigits: int = 8,
         max_difficulty: float = 16384.0,
+        shares_per_minute: int = 20,  # New field for share rate limit
     ):
         self.uptime_alpha = float(uptime_alpha)
         self.window_seconds = (
@@ -28,16 +28,30 @@ class RatingCalculator:
         )  # length of the window (24h)
         self.ndigits = ndigits
         self.max_difficulty = max_difficulty
+        self.shares_per_minute = shares_per_minute  # Store the new field
 
     def compute_effective_work(self, metrics: List[MinerMetrics]) -> float:
         """
         Sum of valid_shares * difficulty, with difficulty clamped to self.max_difficulty,
         and apply a per-worker penalty if difficulty exceeds max_difficulty.
+        Also applies an exponential penalty if valid_shares exceeds allowed shares per window.
         """
-        return sum(
+        total_valid_shares = sum(m.valid_shares for m in metrics)
+        window_minutes = self.window_seconds / 60.0
+        allowed_shares = window_minutes * self.shares_per_minute
+        # Exponential penalty if valid_shares exceeds allowed_shares
+        if total_valid_shares > allowed_shares:
+            # Penalty: exp(-excess/allowed), so large excess nearly zeroes the result
+            excess = total_valid_shares - allowed_shares
+            share_penalty = math.exp(-excess / allowed_shares)
+        else:
+            share_penalty = 1.0
+        # Per-worker penalty for difficulty
+        work = sum(
             m.valid_shares * min(m.difficulty, self.max_difficulty) * self.penalty_exponential(m.difficulty)
             for m in metrics
         )
+        return work * share_penalty
 
     def compute_fractional_uptime(self, uptime_seconds: float) -> float:
         """Convert the worker's uptime_seconds to a fractional uptime for the window."""
